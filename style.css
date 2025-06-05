@@ -1,0 +1,282 @@
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f4f4f4;
+    color: #333333;
+    margin: 0; /* Removed previous margin: 0; as it's covered by reset */
+}
+
+.container { /* Added a container for centering and max-width */
+    max-width: 1100px;
+    margin: auto;
+    overflow: hidden; /* Contains floats */
+    padding: 0 20px; /* Adds some padding on the sides */
+}
+
+header {
+    background: #333366; /* Primary color */
+    color: #fff;
+    padding: 1.5rem 0; /* Refined padding */
+    text-align: center;
+    border-bottom: #2a2a50 3px solid; /* Slightly darker border for depth */
+}
+
+header h1 {
+    margin: 0;
+    font-family: Georgia, serif; /* Heading font */
+    font-size: 2.5rem; /* Appropriate font size */
+}
+
+nav {
+    background: #4a4a7d; /* Slightly lighter than header for contrast */
+    color: #fff;
+    padding: 0.75rem 0; /* Refined padding */
+    text-align: center; /* Ensure nav content is centered */
+}
+
+nav ul {
+    list-style-type: none; /* Remove default list styling */
+    padding: 0;
+    margin: 0;
+    text-align: center;
+}
+
+nav ul li {
+    display: inline-block; /* Display inline-block for better spacing control */
+    margin: 0 15px; /* Spacing between items */
+}
+
+nav ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.1rem;
+    padding: 5px 10px;
+    transition: background-color 0.3s ease; /* Smooth hover effect */
+}
+
+nav ul li a:hover,
+nav ul li a.active { /* Style for active link can be added later via JS */
+    background-color: #333366; /* Primary color on hover */
+    border-radius: 5px;
+}
+
+section {
+    padding: 25px 20px; /* Refined padding */
+    margin: 15px 0; /* Refined margin */
+    background: #fff; /* White background for content sections */
+    border-bottom: 1px solid #ccc; /* Lighter border for sections */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Subtle shadow for depth */
+}
+
+section h2 {
+    font-family: Verdana, sans-serif; /* Heading font */
+    color: #333366; /* Primary color for section headings */
+    margin-bottom: 20px;
+    font-size: 2rem;
+}
+
+section h3 {
+    font-family: Verdana, sans-serif; /* Heading font */
+    color: #444;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+}
+
+/* Timeline Styling */
+#timeline {
+    position: relative;
+    margin: 40px auto; /* Increased margin */
+    padding: 20px 0;
+    list-style: none;
+    max-width: 800px; /* Max width for the timeline itself */
+    background: #f4f4f4; /* Match body background or keep it distinct */
+}
+
+#timeline::before { /* Central vertical line */
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 4px;
+    background: #333366; /* Primary color */
+    margin-left: -2px; /* Center the line */
+    z-index: 1; /* Ensure line is behind events if needed */
+}
+
+/* Clear the H2 styling within timeline or adjust as needed */
+#timeline h2 {
+    text-align: center;
+    margin-bottom: 30px; /* Space below the "Timeline" title */
+    color: #333366;
+}
+
+.timeline-event {
+    padding: 15px 25px; /* Refined padding */
+    position: relative;
+    background-color: #fff;
+    border-radius: 8px; /* Slightly more rounded */
+    margin-bottom: 20px;
+    width: 45%;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15); /* Slightly more pronounced shadow */
+    z-index: 2; /* Ensure events are above the line */
+}
+
+.timeline-event:nth-child(odd) {
+    left: 0; /* Positioned to the left of the central line */
+    /* margin-left: 0; /* Explicitly set if needed */
+}
+
+.timeline-event:nth-child(even) {
+    left: 55%; /* Positioned to the right of the central line */
+}
+
+/* Arrows pointing to the central line */
+.timeline-event::after {
+    content: '';
+    position: absolute;
+    top: 20px; /* Adjust vertical position of arrow */
+    border-width: 10px; /* Size of the arrow */
+    border-style: solid;
+}
+
+.timeline-event:nth-child(odd)::after {
+    right: -20px; /* (width of arrow * 2) - effectively moves it to point from the right edge */
+    border-color: transparent transparent transparent #fff; /* Arrow points left */
+    /* box-shadow is on the main event, not the arrow usually */
+}
+
+.timeline-event:nth-child(even)::after {
+    left: -20px; /* (width of arrow * 2) - effectively moves it to point from the left edge */
+    border-color: transparent #fff transparent transparent; /* Arrow points right */
+}
+
+.timeline-year { /* Styling for the year */
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #4a4a7d; /* Accent color */
+    margin-bottom: 5px;
+    display: block; /* Or inline-block if preferred next to title */
+}
+
+.timeline-event h3 {
+    margin-top: 0;
+    color: #333366; /* Primary color for title */
+    font-family: Verdana, sans-serif; /* Consistent heading font */
+    font-size: 1.3rem; /* Adjusted size */
+    margin-bottom: 8px; /* Space below title */
+}
+
+.timeline-event p {
+    font-size: 0.9rem; /* Adjusted size for description */
+    line-height: 1.5;
+    color: #555; /* Slightly lighter text for description */
+}
+
+footer {
+    text-align: center;
+    padding: 1.5rem; /* Refined padding */
+    background: #333333; /* Darker than body */
+    color: #f4f4f4; /* Light text for contrast */
+    margin-top: 30px; /* Refined margin */
+    font-size: 0.9rem;
+}
+
+/* Utility class for active navigation link (can be set with JavaScript) */
+.active {
+    font-weight: bold;
+    /* Or other distinct styling */
+}
+
+/* Responsive Design Adjustments */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 2rem; /* Adjust heading size for smaller screens */
+    }
+
+    nav ul {
+        padding: 0.5rem 0; /* Adjust padding */
+    }
+
+    nav ul li {
+        display: block; /* Stack navigation links vertically */
+        margin: 10px 0; /* Add margin for spacing */
+    }
+
+    nav ul li a {
+        display: block; /* Make the entire link area clickable */
+        padding: 10px; /* Increase padding for touch targets */
+    }
+
+    .container {
+        padding: 0 10px; /* Reduce side padding for container */
+    }
+
+    section h2 {
+        font-size: 1.8rem;
+    }
+
+    section h3 {
+        font-size: 1.3rem;
+    }
+
+    /* Timeline adjustments for smaller screens */
+    #timeline {
+        margin: 20px auto;
+        padding: 15px 0;
+        max-width: 95%; /* Allow timeline to use more width */
+    }
+
+    #timeline::before {
+        display: none; /* Remove the central line */
+    }
+
+    .timeline-event {
+        width: 90% !important; /* Make events take more width */
+        left: 5% !important;  /* Center them (roughly) by overriding inline L/R styles */
+        margin-bottom: 20px;
+        /* position: relative; /* Already set, ensure it is for ::after if re-enabled */
+    }
+
+    /* Remove or adjust arrows as they don't make sense in a single-column layout */
+    .timeline-event::after {
+        display: none;
+    }
+
+    .timeline-event:nth-child(even) {
+        left: 5% !important; /* Ensure even items also align to the left */
+    }
+}
+
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1.8rem;
+    }
+
+    section {
+        padding: 20px 15px;
+    }
+
+    .timeline-event {
+        padding: 10px 15px;
+    }
+
+    .timeline-event h3 {
+        font-size: 1.1rem;
+    }
+
+    .timeline-event p {
+        font-size: 0.85rem;
+    }
+
+    footer {
+        font-size: 0.8rem;
+    }
+}
