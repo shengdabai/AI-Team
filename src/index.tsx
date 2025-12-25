@@ -8,7 +8,7 @@ const app = new Hono()
 app.use('/api/*', cors({
   origin: '*',
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Provider'],
+  allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Provider', 'X-Model'],
 }))
 
 // Serve static files
@@ -19,10 +19,13 @@ app.post('/api/proxy/:provider', async (c) => {
   const provider = c.req.param('provider')
   const body = await c.req.json()
   const apiKey = c.req.header('X-API-Key')
+  const modelOverride = c.req.header('X-Model')
   
   if (!apiKey) {
     return c.json({ error: 'API Key required' }, 401)
   }
+
+  const model = modelOverride || body.model
 
   const providerConfigs: Record<string, { url: string; headers: Record<string, string> }> = {
     openai: {
@@ -37,7 +40,7 @@ app.post('/api/proxy/:provider', async (c) => {
       }
     },
     gemini: {
-      url: `https://generativelanguage.googleapis.com/v1beta/models/${body.model || 'gemini-pro'}:generateContent?key=${apiKey}`,
+      url: `https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-1.5-pro'}:generateContent?key=${apiKey}`,
       headers: {}
     },
     deepseek: {
@@ -63,6 +66,14 @@ app.post('/api/proxy/:provider', async (c) => {
     grok: {
       url: 'https://api.x.ai/v1/chat/completions',
       headers: { 'Authorization': `Bearer ${apiKey}` }
+    },
+    openrouter: {
+      url: 'https://openrouter.ai/api/v1/chat/completions',
+      headers: { 
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': 'https://ai-team-hub.pages.dev',
+        'X-Title': 'AI Team Hub'
+      }
     }
   }
 
@@ -74,11 +85,12 @@ app.post('/api/proxy/:provider', async (c) => {
   try {
     // Transform request body for different providers
     let requestBody = body
+    requestBody.model = model
     
     if (provider === 'claude') {
       // Claude API format
       requestBody = {
-        model: body.model || 'claude-3-5-sonnet-20241022',
+        model: model || 'claude-3-5-sonnet-20241022',
         max_tokens: body.max_tokens || 4096,
         messages: body.messages
       }
@@ -208,7 +220,7 @@ app.get('/', (c) => {
 <body class="bg-slack-dark text-white h-screen overflow-hidden">
     <div id="app" class="flex h-full">
         <!-- Sidebar -->
-        <aside id="sidebar" class="w-64 bg-slack-sidebar flex flex-col border-r border-slack-border">
+        <aside id="sidebar" class="w-72 bg-slack-sidebar flex flex-col border-r border-slack-border">
             <!-- Workspace Header -->
             <div class="p-4 border-b border-slack-border">
                 <div class="flex items-center justify-between">
@@ -236,7 +248,7 @@ app.get('/', (c) => {
                     </div>
                 </div>
                 
-                <!-- AI Models -->
+                <!-- AI Models by Provider -->
                 <div class="mb-4">
                     <div class="text-gray-400 text-sm mb-2">
                         <i class="fas fa-brain mr-1"></i> AI 模型
@@ -312,7 +324,7 @@ app.get('/', (c) => {
                 <div class="text-center text-gray-500 py-8">
                     <i class="fas fa-comments text-4xl mb-4"></i>
                     <p>开始与AI团队对话</p>
-                    <p class="text-sm mt-2">使用 @模型名 来指定AI回答，例如: @gpt4 你好</p>
+                    <p class="text-sm mt-2">使用 @模型名 来指定AI回答，例如: @gpt-4o 你好</p>
                 </div>
             </div>
             
@@ -334,8 +346,8 @@ app.get('/', (c) => {
                     </div>
                 </div>
                 
-                <!-- Mentions Dropdown -->
-                <div id="mentionsDropdown" class="hidden absolute bottom-24 left-72 bg-slack-sidebar border border-slack-border rounded-lg shadow-xl max-h-64 overflow-y-auto w-64 z-50">
+                <!-- Mentions Dropdown with Sub-menu -->
+                <div id="mentionsDropdown" class="hidden absolute bottom-24 left-80 bg-slack-sidebar border border-slack-border rounded-lg shadow-xl max-h-96 overflow-y-auto w-80 z-50">
                     <!-- Mentions will be rendered here -->
                 </div>
                 
@@ -368,7 +380,7 @@ app.get('/', (c) => {
                 </div>
                 
                 <div class="text-xs text-gray-500 mt-2">
-                    支持的模型: @gpt4 @gpt4o @gpt3.5 @claude @gemini @grok @deepseek @doubao @qwen @kimi @glm | 可上传文件、图片或粘贴网页链接
+                    输入 @ 选择模型 | 支持 OpenAI / Claude / Gemini / Grok / DeepSeek / OpenRouter 等
                 </div>
             </div>
         </main>
@@ -384,9 +396,8 @@ app.get('/', (c) => {
                 </button>
             </div>
             <div class="p-4">
-                <div id="settingsTabs" class="flex gap-2 mb-4 border-b border-slack-border">
+                <div id="settingsTabs" class="flex gap-2 mb-4 border-b border-slack-border flex-wrap">
                     <button class="settings-tab active px-4 py-2 text-sm" data-tab="apikeys">API Keys</button>
-                    <button class="settings-tab px-4 py-2 text-sm" data-tab="models">模型配置</button>
                     <button class="settings-tab px-4 py-2 text-sm" data-tab="custom">自定义模型</button>
                     <button class="settings-tab px-4 py-2 text-sm" data-tab="data">数据管理</button>
                 </div>
@@ -394,12 +405,26 @@ app.get('/', (c) => {
                 <!-- API Keys Tab -->
                 <div id="apikeysTab" class="settings-content">
                     <div class="space-y-4">
+                        <!-- OpenRouter - 推荐 -->
+                        <div class="api-key-item p-3 bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-lg border border-purple-500/30">
+                            <label class="block text-sm font-medium mb-1">
+                                <i class="fas fa-route text-purple-400 mr-1"></i> OpenRouter API Key
+                                <span class="ml-2 text-xs bg-purple-500 text-white px-2 py-0.5 rounded">推荐 - 100+模型</span>
+                            </label>
+                            <input type="password" id="openrouterKey" class="w-full bg-slack-input border border-slack-border rounded px-3 py-2 text-sm" placeholder="sk-or-..." />
+                            <p class="text-xs text-gray-400 mt-1">一个Key访问所有主流模型: GPT-4.5, Claude, Gemini, Llama, Mistral等</p>
+                        </div>
+                        
+                        <div class="border-t border-slack-border pt-4 mt-4">
+                            <p class="text-xs text-gray-500 mb-3">或使用各平台官方API Key:</p>
+                        </div>
+                        
                         <div class="api-key-item">
                             <label class="block text-sm font-medium mb-1">
                                 <i class="fas fa-robot text-green-500 mr-1"></i> OpenAI API Key
                             </label>
                             <input type="password" id="openaiKey" class="w-full bg-slack-input border border-slack-border rounded px-3 py-2 text-sm" placeholder="sk-..." />
-                            <p class="text-xs text-gray-500 mt-1">用于 GPT-4, GPT-4o, GPT-3.5 及 GPTs</p>
+                            <p class="text-xs text-gray-500 mt-1">GPT-4o, GPT-4.5, o1, o3 及 GPTs</p>
                         </div>
                         
                         <div class="api-key-item">
@@ -407,7 +432,7 @@ app.get('/', (c) => {
                                 <i class="fas fa-cloud text-orange-500 mr-1"></i> Anthropic API Key
                             </label>
                             <input type="password" id="claudeKey" class="w-full bg-slack-input border border-slack-border rounded px-3 py-2 text-sm" placeholder="sk-ant-..." />
-                            <p class="text-xs text-gray-500 mt-1">用于 Claude 3.5 Sonnet, Opus, Haiku</p>
+                            <p class="text-xs text-gray-500 mt-1">Claude 3.5/4 Sonnet, Opus, Haiku</p>
                         </div>
                         
                         <div class="api-key-item">
@@ -415,7 +440,7 @@ app.get('/', (c) => {
                                 <i class="fas fa-gem text-blue-500 mr-1"></i> Google AI API Key
                             </label>
                             <input type="password" id="geminiKey" class="w-full bg-slack-input border border-slack-border rounded px-3 py-2 text-sm" placeholder="AIza..." />
-                            <p class="text-xs text-gray-500 mt-1">用于 Gemini Pro, Gemini Flash</p>
+                            <p class="text-xs text-gray-500 mt-1">Gemini 2.0/2.5 Pro, Flash</p>
                         </div>
                         
                         <div class="api-key-item">
@@ -423,7 +448,7 @@ app.get('/', (c) => {
                                 <i class="fab fa-x-twitter text-white mr-1"></i> xAI API Key
                             </label>
                             <input type="password" id="grokKey" class="w-full bg-slack-input border border-slack-border rounded px-3 py-2 text-sm" placeholder="xai-..." />
-                            <p class="text-xs text-gray-500 mt-1">用于 Grok</p>
+                            <p class="text-xs text-gray-500 mt-1">Grok 2, Grok 3</p>
                         </div>
                         
                         <div class="api-key-item">
@@ -431,6 +456,7 @@ app.get('/', (c) => {
                                 <i class="fas fa-fish text-cyan-500 mr-1"></i> DeepSeek API Key
                             </label>
                             <input type="password" id="deepseekKey" class="w-full bg-slack-input border border-slack-border rounded px-3 py-2 text-sm" placeholder="sk-..." />
+                            <p class="text-xs text-gray-500 mt-1">DeepSeek V3, R1, Coder</p>
                         </div>
                         
                         <div class="api-key-item">
@@ -467,13 +493,6 @@ app.get('/', (c) => {
                     </div>
                 </div>
                 
-                <!-- Models Tab -->
-                <div id="modelsTab" class="settings-content hidden">
-                    <div class="space-y-3" id="modelConfigs">
-                        <!-- Model configs will be rendered here -->
-                    </div>
-                </div>
-                
                 <!-- Custom Models Tab -->
                 <div id="customTab" class="settings-content hidden">
                     <div class="mb-4">
@@ -481,11 +500,8 @@ app.get('/', (c) => {
                         <div class="space-y-3">
                             <input type="text" id="customModelName" class="w-full bg-slack-input border border-slack-border rounded px-3 py-2 text-sm" placeholder="模型名称 (用于@提及)" />
                             <input type="text" id="customModelEndpoint" class="w-full bg-slack-input border border-slack-border rounded px-3 py-2 text-sm" placeholder="API Endpoint URL" />
+                            <input type="text" id="customModelId" class="w-full bg-slack-input border border-slack-border rounded px-3 py-2 text-sm" placeholder="模型ID (如 gpt-4)" />
                             <input type="password" id="customModelKey" class="w-full bg-slack-input border border-slack-border rounded px-3 py-2 text-sm" placeholder="API Key" />
-                            <select id="customModelFormat" class="w-full bg-slack-input border border-slack-border rounded px-3 py-2 text-sm">
-                                <option value="openai">OpenAI 兼容格式</option>
-                                <option value="custom">自定义格式</option>
-                            </select>
                             <button id="addCustomModel" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded">
                                 <i class="fas fa-plus mr-2"></i>添加模型
                             </button>
