@@ -88,14 +88,21 @@ app.post('/api/proxy/:provider', async (c) => {
     
     // OpenAI - 新模型使用 max_completion_tokens
     if (provider === 'openai') {
-      // 检测是否是新模型（GPT-5.x, o3, o1 等需要 max_completion_tokens）
-      const newModels = ['gpt-5', 'gpt-4.5', 'o3', 'o1', 'gpt-4o']
-      const isNewModel = newModels.some(nm => model.toLowerCase().includes(nm.toLowerCase()))
+      // 检测是否是需要 max_completion_tokens 的模型 (o1, o3 系列等推理模型)
+      const reasoningModels = ['o3', 'o1']
+      const isReasoningModel = reasoningModels.some(nm => model.toLowerCase().startsWith(nm))
       
+      // 构建请求体
       requestBody = {
         model: model,
-        messages: body.messages,
-        ...(isNewModel ? { max_completion_tokens: 4096 } : { max_tokens: 4096 })
+        messages: body.messages
+      }
+      
+      // 推理模型不支持 max_tokens，使用 max_completion_tokens
+      if (isReasoningModel) {
+        requestBody.max_completion_tokens = 4096
+      } else {
+        requestBody.max_tokens = body.max_tokens || 4096
       }
     } else if (provider === 'claude') {
       requestBody = {
@@ -114,14 +121,20 @@ app.post('/api/proxy/:provider', async (c) => {
         }
       }
     } else if (provider === 'openrouter') {
-      // OpenRouter 也需要根据模型类型处理
-      const newModels = ['gpt-5', 'gpt-4.5', 'o3', 'o1', 'gpt-4o']
-      const isNewModel = newModels.some(nm => model.toLowerCase().includes(nm.toLowerCase()))
+      // OpenRouter 对于推理模型也需要特殊处理
+      const reasoningModels = ['o3', 'o1', 'deepseek-r1', 'qwq']
+      const modelShort = model.split('/').pop()?.toLowerCase() || ''
+      const isReasoningModel = reasoningModels.some(nm => modelShort.startsWith(nm) || modelShort.includes(nm))
       
       requestBody = {
         model: model,
-        messages: body.messages,
-        ...(isNewModel ? { max_completion_tokens: 4096 } : { max_tokens: 4096 })
+        messages: body.messages
+      }
+      
+      if (isReasoningModel) {
+        requestBody.max_completion_tokens = 4096
+      } else {
+        requestBody.max_tokens = body.max_tokens || 4096
       }
     }
 
@@ -414,9 +427,9 @@ app.get('/', (c) => {
                     <h3 class="text-2xl font-bold text-white mb-3">开始智能对话</h3>
                     <p class="text-slate-400 mb-6">输入 <code class="bg-slate-700 px-2 py-1 rounded text-blue-400 font-mono">@</code> 选择AI模型开始协作</p>
                     <div class="flex flex-wrap gap-2 justify-center">
-                        <span class="px-3 py-1.5 rounded-full bg-green-500/20 text-green-400 text-sm">@gpt-5.2</span>
-                        <span class="px-3 py-1.5 rounded-full bg-orange-500/20 text-orange-400 text-sm">@claude-opus-4.5</span>
-                        <span class="px-3 py-1.5 rounded-full bg-blue-500/20 text-blue-400 text-sm">@gemini-3-pro</span>
+                        <span class="px-3 py-1.5 rounded-full bg-green-500/20 text-green-400 text-sm">@gpt-4o</span>
+                        <span class="px-3 py-1.5 rounded-full bg-orange-500/20 text-orange-400 text-sm">@claude-3.5-sonnet</span>
+                        <span class="px-3 py-1.5 rounded-full bg-blue-500/20 text-blue-400 text-sm">@gemini-2.0-flash</span>
                     </div>
                 </div>
             </div>

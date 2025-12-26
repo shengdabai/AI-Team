@@ -16,7 +16,7 @@
     CURRENT_CHANNEL: 'aiteam_current_channel'
   };
 
-  // Complete AI Models - Updated Dec 2025
+  // Complete AI Models - Updated Dec 2025 (Using actual API model IDs)
   const AI_PROVIDERS = {
     openai: {
       name: 'OpenAI',
@@ -24,18 +24,15 @@
       color: '#10a37f',
       keyName: 'openaiKey',
       models: [
-        { id: 'gpt-5.2', name: 'GPT-5.2', tag: 'LATEST' },
-        { id: 'gpt-5.1', name: 'GPT-5.1' },
-        { id: 'gpt-5', name: 'GPT-5' },
-        { id: 'gpt-4.5-preview', name: 'GPT-4.5 Preview' },
-        { id: 'gpt-4o', name: 'GPT-4o' },
+        { id: 'gpt-4o', name: 'GPT-4o', tag: 'LATEST' },
         { id: 'gpt-4o-mini', name: 'GPT-4o Mini', tag: 'Fast' },
-        { id: 'o3', name: 'o3', tag: 'Reasoning' },
-        { id: 'o3-mini', name: 'o3-mini' },
-        { id: 'o1', name: 'o1' },
+        { id: 'o1', name: 'o1', tag: 'Reasoning' },
         { id: 'o1-mini', name: 'o1-mini' },
+        { id: 'o1-preview', name: 'o1 Preview' },
         { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
+        { id: 'gpt-4-turbo-preview', name: 'GPT-4 Turbo Preview' },
         { id: 'gpt-4', name: 'GPT-4' },
+        { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', tag: 'Economy' },
       ]
     },
     claude: {
@@ -44,14 +41,12 @@
       color: '#d97850',
       keyName: 'claudeKey',
       models: [
-        { id: 'claude-opus-4.5', name: 'Claude Opus 4.5', tag: 'LATEST' },
-        { id: 'claude-sonnet-4.5', name: 'Claude Sonnet 4.5' },
-        { id: 'claude-haiku-4.5', name: 'Claude Haiku 4.5', tag: 'Fast' },
-        { id: 'claude-opus-4', name: 'Claude Opus 4' },
-        { id: 'claude-sonnet-4', name: 'Claude Sonnet 4' },
-        { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet', tag: 'Hybrid' },
+        { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', tag: 'LATEST' },
         { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet' },
-        { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku' },
+        { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', tag: 'Fast' },
+        { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus' },
+        { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet' },
+        { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku' },
       ]
     },
     gemini: {
@@ -60,13 +55,12 @@
       color: '#4285f4',
       keyName: 'geminiKey',
       models: [
-        { id: 'gemini-3-pro', name: 'Gemini 3 Pro', tag: 'LATEST' },
-        { id: 'gemini-3-pro-vision', name: 'Gemini 3 Pro Vision', tag: 'Vision' },
-        { id: 'gemini-3-flash', name: 'Gemini 3 Flash', tag: 'Fast' },
-        { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
-        { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
+        { id: 'gemini-2.5-flash-preview-05-20', name: 'Gemini 2.5 Flash', tag: 'LATEST' },
         { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash' },
+        { id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash Lite', tag: 'Fast' },
         { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
+        { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
+        { id: 'gemini-1.5-flash-8b', name: 'Gemini 1.5 Flash 8B', tag: 'Economy' },
       ]
     },
     grok: {
@@ -75,11 +69,11 @@
       color: '#ffffff',
       keyName: 'grokKey',
       models: [
-        { id: 'grok-4.1', name: 'Grok 4.1', tag: 'LATEST' },
-        { id: 'grok-4', name: 'Grok 4' },
-        { id: 'grok-3', name: 'Grok 3' },
-        { id: 'grok-3-mini', name: 'Grok 3 Mini', tag: 'Fast' },
-        { id: 'grok-2', name: 'Grok 2' },
+        { id: 'grok-3', name: 'Grok 3', tag: 'LATEST' },
+        { id: 'grok-3-fast', name: 'Grok 3 Fast', tag: 'Fast' },
+        { id: 'grok-2-1212', name: 'Grok 2' },
+        { id: 'grok-2-vision-1212', name: 'Grok 2 Vision', tag: 'Vision' },
+        { id: 'grok-beta', name: 'Grok Beta' },
       ]
     },
     deepseek: {
@@ -88,11 +82,8 @@
       color: '#00b4d8',
       keyName: 'deepseekKey',
       models: [
-        { id: 'deepseek-v3.2', name: 'DeepSeek V3.2', tag: 'LATEST' },
-        { id: 'deepseek-v3.2-exp', name: 'DeepSeek V3.2 Exp', tag: 'Reasoning' },
-        { id: 'deepseek-v3.1', name: 'DeepSeek V3.1' },
-        { id: 'deepseek-r1', name: 'DeepSeek R1', tag: 'Reasoning' },
-        { id: 'deepseek-chat', name: 'DeepSeek V3' },
+        { id: 'deepseek-chat', name: 'DeepSeek V3', tag: 'LATEST' },
+        { id: 'deepseek-reasoner', name: 'DeepSeek R1', tag: 'Reasoning' },
         { id: 'deepseek-coder', name: 'DeepSeek Coder', tag: 'Code' },
       ]
     },
@@ -102,23 +93,26 @@
       color: '#a855f7',
       keyName: 'openrouterKey',
       models: [
-        { id: 'openai/gpt-5.2', name: 'GPT-5.2', tag: 'HOT' },
-        { id: 'anthropic/claude-opus-4.5', name: 'Claude Opus 4.5', tag: 'HOT' },
-        { id: 'google/gemini-3-pro', name: 'Gemini 3 Pro', tag: 'NEW' },
-        { id: 'x-ai/grok-4.1', name: 'Grok 4.1', tag: 'NEW' },
-        { id: 'deepseek/deepseek-v3.2', name: 'DeepSeek V3.2' },
-        { id: 'openai/o3', name: 'o3', tag: 'Reasoning' },
+        { id: 'openai/gpt-4o', name: 'GPT-4o', tag: 'HOT' },
+        { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini', tag: 'Fast' },
+        { id: 'openai/o1', name: 'o1', tag: 'Reasoning' },
+        { id: 'openai/o1-mini', name: 'o1-mini' },
+        { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4', tag: 'HOT' },
+        { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet' },
+        { id: 'anthropic/claude-3.5-haiku', name: 'Claude 3.5 Haiku', tag: 'Fast' },
+        { id: 'google/gemini-2.5-flash-preview', name: 'Gemini 2.5 Flash', tag: 'NEW' },
+        { id: 'google/gemini-2.0-flash-001', name: 'Gemini 2.0 Flash' },
+        { id: 'google/gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
+        { id: 'x-ai/grok-3', name: 'Grok 3', tag: 'NEW' },
+        { id: 'deepseek/deepseek-chat', name: 'DeepSeek V3' },
         { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1', tag: 'Reasoning' },
-        { id: 'meta-llama/llama-4-maverick', name: 'Llama 4 Maverick', tag: 'Open' },
-        { id: 'meta-llama/llama-4-scout', name: 'Llama 4 Scout' },
-        { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B' },
+        { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B', tag: 'Open' },
         { id: 'mistralai/mistral-large-2411', name: 'Mistral Large' },
         { id: 'mistralai/codestral-latest', name: 'Codestral', tag: 'Code' },
         { id: 'qwen/qwen-2.5-72b-instruct', name: 'Qwen 2.5 72B' },
-        { id: 'qwen/qwq-32b', name: 'QwQ 32B', tag: 'Reasoning' },
+        { id: 'qwen/qwq-32b-preview', name: 'QwQ 32B', tag: 'Reasoning' },
         { id: 'perplexity/sonar-pro', name: 'Sonar Pro', tag: 'Search' },
-        { id: 'cohere/command-r-plus', name: 'Command R+' },
-        { id: 'z-ai/glm-4.7', name: 'GLM 4.7', tag: 'NEW' },
+        { id: 'cohere/command-r-plus-08-2024', name: 'Command R+' },
       ]
     },
     doubao: {
@@ -127,11 +121,12 @@
       color: '#ff6b6b',
       keyName: 'doubaoKey',
       models: [
-        { id: 'doubao-pro-256k', name: '豆包 Pro 256K', tag: 'LATEST' },
+        { id: 'doubao-1.5-pro-256k', name: '豆包 1.5 Pro 256K', tag: 'LATEST' },
+        { id: 'doubao-1.5-pro-32k', name: '豆包 1.5 Pro 32K' },
+        { id: 'doubao-1-5-lite-32k', name: '豆包 1.5 Lite 32K', tag: 'Fast' },
+        { id: 'doubao-pro-256k', name: '豆包 Pro 256K' },
         { id: 'doubao-pro-128k', name: '豆包 Pro 128K' },
         { id: 'doubao-pro-32k', name: '豆包 Pro 32K' },
-        { id: 'doubao-lite-128k', name: '豆包 Lite 128K', tag: 'Fast' },
-        { id: 'doubao-lite-32k', name: '豆包 Lite 32K' },
       ]
     },
     qwen: {
@@ -165,11 +160,12 @@
       color: '#6366f1',
       keyName: 'glmKey',
       models: [
-        { id: 'glm-4.7', name: 'GLM-4.7', tag: 'LATEST' },
-        { id: 'glm-4-plus', name: 'GLM-4 Plus' },
-        { id: 'glm-4', name: 'GLM-4' },
+        { id: 'glm-4-plus', name: 'GLM-4 Plus', tag: 'LATEST' },
+        { id: 'glm-4-0520', name: 'GLM-4' },
         { id: 'glm-4-flash', name: 'GLM-4 Flash', tag: 'Fast' },
         { id: 'glm-4-air', name: 'GLM-4 Air' },
+        { id: 'glm-4-airx', name: 'GLM-4 AirX' },
+        { id: 'glm-4-long', name: 'GLM-4 Long', tag: '1M Context' },
       ]
     }
   };
