@@ -1,10 +1,10 @@
 # AI Team Hub 🤖
 
-[![GPT-5.2](https://img.shields.io/badge/GPT-5.2-10a37f?style=flat-square&logo=openai&logoColor=white)](https://openai.com)
-[![Claude 4.5](https://img.shields.io/badge/Claude-4.5-d97850?style=flat-square)](https://anthropic.com)
-[![Gemini 3](https://img.shields.io/badge/Gemini-3%20Pro-4285f4?style=flat-square&logo=google&logoColor=white)](https://ai.google)
-[![Grok 4.1](https://img.shields.io/badge/Grok-4.1-ffffff?style=flat-square&logo=x&logoColor=black)](https://x.ai)
-[![DeepSeek V3.2](https://img.shields.io/badge/DeepSeek-V3.2-00b4d8?style=flat-square)](https://deepseek.com)
+[![GPT-4o](https://img.shields.io/badge/GPT-4o-10a37f?style=flat-square&logo=openai&logoColor=white)](https://openai.com)
+[![Claude 3.5](https://img.shields.io/badge/Claude-3.5%20Sonnet-d97850?style=flat-square)](https://anthropic.com)
+[![Gemini 2.0](https://img.shields.io/badge/Gemini-2.0%20Flash-4285f4?style=flat-square&logo=google&logoColor=white)](https://ai.google)
+[![Grok 3](https://img.shields.io/badge/Grok-3-ffffff?style=flat-square&logo=x&logoColor=black)](https://x.ai)
+[![DeepSeek V3](https://img.shields.io/badge/DeepSeek-V3-00b4d8?style=flat-square)](https://deepseek.com)
 
 **智能多模型AI协作平台** - 在一个类Slack界面中通过 @ 提及不同AI模型，组建你的AI团队解决复杂问题。
 
@@ -45,58 +45,60 @@
 - 添加任何 OpenAI 兼容 API
 - 自定义端点、模型ID、API Key
 
-## 🤖 支持的AI模型
+## 🤖 支持的AI模型 (使用实际API模型ID)
 
 ### OpenAI
 | 模型 | @ 名称 | 说明 |
 |------|--------|------|
-| GPT-5.2 | `@gpt-5.2` | 最新旗舰模型 |
-| GPT-5.1 | `@gpt-5.1` | |
-| GPT-5 | `@gpt-5` | |
-| GPT-4.5 Preview | `@gpt-4.5-preview` | |
-| GPT-4o | `@gpt-4o` | 多模态模型 |
-| o3 | `@o3` | 推理模型 |
+| GPT-4o | `@gpt-4o` | 最新旗舰模型 |
+| GPT-4o Mini | `@gpt-4o-mini` | 快速经济版 |
+| o1 | `@o1` | 推理模型 |
+| o1-mini | `@o1-mini` | 轻量推理 |
+| GPT-4 Turbo | `@gpt-4-turbo` | 高性能版 |
 
 ### Anthropic Claude
 | 模型 | @ 名称 | 说明 |
 |------|--------|------|
-| Claude Opus 4.5 | `@claude-opus-4.5` | 最新旗舰 |
-| Claude Sonnet 4.5 | `@claude-sonnet-4.5` | |
-| Claude Haiku 4.5 | `@claude-haiku-4.5` | 快速响应 |
+| Claude Sonnet 4 | `@claude-sonnet-4-20250514` | 最新旗舰 |
+| Claude 3.5 Sonnet | `@claude-3-5-sonnet-20241022` | 性能均衡 |
+| Claude 3.5 Haiku | `@claude-3-5-haiku-20241022` | 快速响应 |
+| Claude 3 Opus | `@claude-3-opus-20240229` | 最强能力 |
 
 ### Google Gemini
 | 模型 | @ 名称 | 说明 |
 |------|--------|------|
-| Gemini 3 Pro | `@gemini-3-pro` | 最新旗舰 |
-| Gemini 3 Pro Vision | `@gemini-3-pro-vision` | 视觉能力 |
-| Gemini 3 Flash | `@gemini-3-flash` | 快速响应 |
+| Gemini 2.5 Flash | `@gemini-2.5-flash-preview-05-20` | 最新版本 |
+| Gemini 2.0 Flash | `@gemini-2.0-flash` | 主力模型 |
+| Gemini 1.5 Pro | `@gemini-1.5-pro` | 长上下文 |
+| Gemini 1.5 Flash | `@gemini-1.5-flash` | 快速响应 |
 
 ### xAI Grok
 | 模型 | @ 名称 | 说明 |
 |------|--------|------|
-| Grok 4.1 | `@grok-4.1` | 最新版本 |
-| Grok 4 | `@grok-4` | |
-| Grok 3 | `@grok-3` | |
+| Grok 3 | `@grok-3` | 最新版本 |
+| Grok 3 Fast | `@grok-3-fast` | 快速版 |
+| Grok 2 | `@grok-2-1212` | 稳定版 |
 
 ### DeepSeek
 | 模型 | @ 名称 | 说明 |
 |------|--------|------|
-| DeepSeek V3.2 | `@deepseek-v3.2` | 最新版本 |
-| DeepSeek R1 | `@deepseek-r1` | 推理模型 |
+| DeepSeek V3 | `@deepseek-chat` | 最新版本 |
+| DeepSeek R1 | `@deepseek-reasoner` | 推理模型 |
 | DeepSeek Coder | `@deepseek-coder` | 代码专家 |
 
 ### OpenRouter (推荐 - 100+模型)
 一个API Key访问所有主流模型：
-- `@gpt-5.2` `@claude-opus-4.5` `@gemini-3-pro` `@grok-4.1`
-- `@llama-4-maverick` `@mistral-large` `@qwen-2.5-72b` `@sonar-pro`
+- `@openai/gpt-4o` `@anthropic/claude-sonnet-4` `@google/gemini-2.0-flash-001`
+- `@x-ai/grok-3` `@deepseek/deepseek-chat` `@deepseek/deepseek-r1`
+- `@meta-llama/llama-3.3-70b-instruct` `@mistralai/mistral-large-2411`
 
 ### 中国模型
 | 平台 | 模型 | @ 名称 |
 |------|------|--------|
-| 豆包 | Pro 256K | `@doubao-pro-256k` |
+| 豆包 | 1.5 Pro 256K | `@doubao-1.5-pro-256k` |
 | 通义千问 | Qwen Max | `@qwen-max-latest` |
 | Kimi | Moonshot Auto | `@moonshot-v1-auto` |
-| 智谱 | GLM-4.7 | `@glm-4.7` |
+| 智谱 | GLM-4 Plus | `@glm-4-plus` |
 
 ## 🚀 快速开始
 
@@ -107,12 +109,12 @@
 
 ### 2. 开始对话
 ```
-@gpt-5.2 你好，介绍一下你自己
+@gpt-4o 你好，介绍一下你自己
 ```
 
 ### 3. 多模型协作
 ```
-@claude-opus-4.5 @gemini-3-pro 对比分析：人工智能对教育的影响
+@claude-3-5-sonnet-20241022 @gemini-2.0-flash 对比分析：人工智能对教育的影响
 ```
 
 ### 4. 上传文件分析
@@ -166,6 +168,13 @@ npm run deploy
 
 ## 📝 更新日志
 
+### v3.1 (2025-12-26)
+- 🔧 更新所有模型ID为实际API支持的格式
+- 🐛 修复 max_tokens 参数问题 (推理模型使用 max_completion_tokens)
+- 📊 OpenAI: gpt-4o, o1, o1-mini 等
+- 📊 Gemini: gemini-2.0-flash, gemini-1.5-pro 等
+- 📊 Claude: claude-3-5-sonnet-20241022, claude-3-opus-20240229 等
+
 ### v3.0 (2025-12-26)
 - 🎨 全新商务专业界面设计
 - 🐛 修复消息发送功能
@@ -175,7 +184,6 @@ npm run deploy
 ### v2.0 (2025-12-26)
 - ✨ 添加 OpenRouter 支持 (100+模型)
 - 📋 模型选择器升级为二级菜单
-- 🔄 更新至最新模型 (GPT-5.2, Claude 4.5, Gemini 3, Grok 4.1)
 
 ### v1.0 (2025-12-26)
 - 🚀 初始版本发布
