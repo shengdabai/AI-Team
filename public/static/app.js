@@ -13,7 +13,7 @@
     CURRENT_CHANNEL: 'aiteam_current_channel'
   };
 
-  // Complete AI Models organized by Provider
+  // Complete AI Models organized by Provider (Updated Dec 2025)
   const AI_PROVIDERS = {
     openai: {
       name: 'OpenAI',
@@ -21,16 +21,23 @@
       color: '#10a37f',
       keyName: 'openaiKey',
       models: [
-        { id: 'gpt-4.5-preview', name: 'GPT-4.5 Preview', tag: 'NEW' },
+        // GPT-5 Series (Latest Dec 2025)
+        { id: 'gpt-5.2', name: 'GPT-5.2', tag: 'LATEST' },
+        { id: 'gpt-5.1', name: 'GPT-5.1' },
+        { id: 'gpt-5', name: 'GPT-5' },
+        // GPT-4.5 Series
+        { id: 'gpt-4.5-preview', name: 'GPT-4.5 Preview' },
+        // GPT-4o Series
         { id: 'gpt-4o', name: 'GPT-4o' },
-        { id: 'gpt-4o-mini', name: 'GPT-4o Mini' },
+        { id: 'gpt-4o-mini', name: 'GPT-4o Mini', tag: 'Fast' },
+        // o-Series Reasoning Models
+        { id: 'o3', name: 'o3', tag: 'Reasoning' },
+        { id: 'o3-mini', name: 'o3-mini' },
+        { id: 'o1', name: 'o1' },
+        { id: 'o1-mini', name: 'o1-mini' },
+        // Legacy
         { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
         { id: 'gpt-4', name: 'GPT-4' },
-        { id: 'o1', name: 'o1', tag: 'Reasoning' },
-        { id: 'o1-mini', name: 'o1-mini' },
-        { id: 'o1-preview', name: 'o1-preview' },
-        { id: 'o3-mini', name: 'o3-mini', tag: 'NEW' },
-        { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
       ]
     },
     claude: {
@@ -39,11 +46,18 @@
       color: '#d97850',
       keyName: 'claudeKey',
       models: [
-        { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', tag: 'NEW' },
-        { id: 'claude-3-7-sonnet-20250219', name: 'Claude 3.7 Sonnet', tag: 'Hybrid' },
+        // Claude 4.5 Series (Latest Nov 2025)
+        { id: 'claude-opus-4.5', name: 'Claude Opus 4.5', tag: 'LATEST' },
+        { id: 'claude-sonnet-4.5', name: 'Claude Sonnet 4.5' },
+        { id: 'claude-haiku-4.5', name: 'Claude Haiku 4.5', tag: 'Fast' },
+        // Claude 4 Series
+        { id: 'claude-opus-4', name: 'Claude Opus 4' },
+        { id: 'claude-sonnet-4', name: 'Claude Sonnet 4' },
+        // Claude 3.7 (Hybrid Reasoning)
+        { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet', tag: 'Hybrid' },
+        // Claude 3.5 Series
         { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet' },
-        { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', tag: 'Fast' },
-        { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus' },
+        { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku' },
       ]
     },
     gemini: {
@@ -52,12 +66,18 @@
       color: '#4285f4',
       keyName: 'geminiKey',
       models: [
-        { id: 'gemini-2.5-pro-preview-06-05', name: 'Gemini 2.5 Pro', tag: 'NEW' },
-        { id: 'gemini-2.5-flash-preview-05-20', name: 'Gemini 2.5 Flash', tag: 'Fast' },
+        // Gemini 3 Series (Latest Dec 2025)
+        { id: 'gemini-3-pro', name: 'Gemini 3 Pro', tag: 'LATEST' },
+        { id: 'gemini-3-pro-vision', name: 'Gemini 3 Pro Vision', tag: 'Vision' },
+        { id: 'gemini-3-flash', name: 'Gemini 3 Flash', tag: 'Fast' },
+        // Gemini 2.5 Series
+        { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
+        { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
+        // Gemini 2.0 Series
         { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash' },
         { id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash Lite' },
+        // Legacy
         { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
-        { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
       ]
     },
     grok: {
@@ -66,11 +86,15 @@
       color: '#ffffff',
       keyName: 'grokKey',
       models: [
-        { id: 'grok-3', name: 'Grok 3', tag: 'NEW' },
-        { id: 'grok-3-mini', name: 'Grok 3 Mini' },
+        // Grok 4 Series (Latest Nov 2025)
+        { id: 'grok-4.1', name: 'Grok 4.1', tag: 'LATEST' },
+        { id: 'grok-4', name: 'Grok 4' },
+        // Grok 3 Series
+        { id: 'grok-3', name: 'Grok 3' },
+        { id: 'grok-3-mini', name: 'Grok 3 Mini', tag: 'Fast' },
+        // Grok 2 Series
         { id: 'grok-2', name: 'Grok 2' },
         { id: 'grok-2-mini', name: 'Grok 2 Mini' },
-        { id: 'grok-beta', name: 'Grok Beta' },
       ]
     },
     deepseek: {
@@ -79,9 +103,16 @@
       color: '#00b4d8',
       keyName: 'deepseekKey',
       models: [
-        { id: 'deepseek-chat', name: 'DeepSeek V3', tag: 'Latest' },
-        { id: 'deepseek-reasoner', name: 'DeepSeek R1', tag: 'Reasoning' },
-        { id: 'deepseek-coder', name: 'DeepSeek Coder' },
+        // V3.2 Series (Latest Dec 2025)
+        { id: 'deepseek-v3.2', name: 'DeepSeek V3.2', tag: 'LATEST' },
+        { id: 'deepseek-v3.2-exp', name: 'DeepSeek V3.2 Exp', tag: 'Reasoning' },
+        // V3.1 Series
+        { id: 'deepseek-v3.1', name: 'DeepSeek V3.1' },
+        // R1 Reasoning Model
+        { id: 'deepseek-r1', name: 'DeepSeek R1', tag: 'Reasoning' },
+        // V3 & Coder
+        { id: 'deepseek-chat', name: 'DeepSeek V3' },
+        { id: 'deepseek-coder', name: 'DeepSeek Coder', tag: 'Code' },
       ]
     },
     openrouter: {
@@ -90,23 +121,30 @@
       color: '#a855f7',
       keyName: 'openrouterKey',
       models: [
-        // Latest & Most Popular from OpenRouter
-        { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4', tag: 'HOT' },
-        { id: 'openai/gpt-4.5-preview', name: 'GPT-4.5 Preview', tag: 'NEW' },
-        { id: 'openai/o3-mini', name: 'o3-mini', tag: 'Reasoning' },
-        { id: 'google/gemini-2.5-pro-preview', name: 'Gemini 2.5 Pro' },
-        { id: 'meta-llama/llama-4-maverick', name: 'Llama 4 Maverick', tag: 'NEW' },
+        // Latest & Most Popular (Dec 2025)
+        { id: 'openai/gpt-5.2', name: 'GPT-5.2', tag: 'HOT' },
+        { id: 'anthropic/claude-opus-4.5', name: 'Claude Opus 4.5', tag: 'HOT' },
+        { id: 'google/gemini-3-pro', name: 'Gemini 3 Pro', tag: 'NEW' },
+        { id: 'x-ai/grok-4.1', name: 'Grok 4.1', tag: 'NEW' },
+        { id: 'deepseek/deepseek-v3.2', name: 'DeepSeek V3.2' },
+        { id: 'openai/o3', name: 'o3', tag: 'Reasoning' },
+        { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1', tag: 'Reasoning' },
+        // Meta Llama 4 Series
+        { id: 'meta-llama/llama-4-maverick', name: 'Llama 4 Maverick', tag: 'Open' },
         { id: 'meta-llama/llama-4-scout', name: 'Llama 4 Scout' },
         { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B' },
+        // Mistral
         { id: 'mistralai/mistral-large-2411', name: 'Mistral Large' },
         { id: 'mistralai/codestral-latest', name: 'Codestral', tag: 'Code' },
+        // Qwen
         { id: 'qwen/qwen-2.5-72b-instruct', name: 'Qwen 2.5 72B' },
         { id: 'qwen/qwq-32b', name: 'QwQ 32B', tag: 'Reasoning' },
-        { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1' },
-        { id: 'deepseek/deepseek-chat', name: 'DeepSeek V3' },
-        { id: 'cohere/command-r-plus', name: 'Command R+' },
+        // Perplexity (Search)
         { id: 'perplexity/sonar-pro', name: 'Sonar Pro', tag: 'Search' },
         { id: 'perplexity/sonar-reasoning-pro', name: 'Sonar Reasoning', tag: 'Search' },
+        // Others
+        { id: 'cohere/command-r-plus', name: 'Command R+' },
+        { id: 'z-ai/glm-4.7', name: 'GLM 4.7', tag: 'NEW' },
       ]
     },
     doubao: {
@@ -115,8 +153,10 @@
       color: '#ff6b6b',
       keyName: 'doubaoKey',
       models: [
-        { id: 'doubao-pro-32k', name: '豆包 Pro 32K' },
+        { id: 'doubao-pro-256k', name: '豆包 Pro 256K', tag: 'LATEST' },
         { id: 'doubao-pro-128k', name: '豆包 Pro 128K' },
+        { id: 'doubao-pro-32k', name: '豆包 Pro 32K' },
+        { id: 'doubao-lite-128k', name: '豆包 Lite 128K', tag: 'Fast' },
         { id: 'doubao-lite-32k', name: '豆包 Lite 32K' },
       ]
     },
@@ -126,10 +166,11 @@
       color: '#7c3aed',
       keyName: 'qwenKey',
       models: [
-        { id: 'qwen-max', name: 'Qwen Max' },
-        { id: 'qwen-plus', name: 'Qwen Plus' },
-        { id: 'qwen-turbo', name: 'Qwen Turbo' },
-        { id: 'qwen-long', name: 'Qwen Long' },
+        { id: 'qwen-max-latest', name: 'Qwen Max', tag: 'LATEST' },
+        { id: 'qwen-plus-latest', name: 'Qwen Plus' },
+        { id: 'qwen-turbo-latest', name: 'Qwen Turbo', tag: 'Fast' },
+        { id: 'qwen-long', name: 'Qwen Long', tag: '1M Context' },
+        { id: 'qwen-coder-plus', name: 'Qwen Coder Plus', tag: 'Code' },
       ]
     },
     kimi: {
@@ -138,9 +179,10 @@
       color: '#fbbf24',
       keyName: 'kimiKey',
       models: [
+        { id: 'moonshot-v1-auto', name: 'Moonshot Auto', tag: 'LATEST' },
         { id: 'moonshot-v1-128k', name: 'Moonshot 128K' },
         { id: 'moonshot-v1-32k', name: 'Moonshot 32K' },
-        { id: 'moonshot-v1-8k', name: 'Moonshot 8K' },
+        { id: 'moonshot-v1-8k', name: 'Moonshot 8K', tag: 'Fast' },
       ]
     },
     glm: {
@@ -149,9 +191,10 @@
       color: '#6366f1',
       keyName: 'glmKey',
       models: [
-        { id: 'glm-4-plus', name: 'GLM-4 Plus', tag: 'Latest' },
+        { id: 'glm-4.7', name: 'GLM-4.7', tag: 'LATEST' },
+        { id: 'glm-4-plus', name: 'GLM-4 Plus' },
         { id: 'glm-4', name: 'GLM-4' },
-        { id: 'glm-4-flash', name: 'GLM-4 Flash' },
+        { id: 'glm-4-flash', name: 'GLM-4 Flash', tag: 'Fast' },
         { id: 'glm-4-air', name: 'GLM-4 Air' },
       ]
     }
