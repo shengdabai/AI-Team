@@ -86,7 +86,18 @@ app.post('/api/proxy/:provider', async (c) => {
     let requestBody = body
     requestBody.model = model
     
-    if (provider === 'claude') {
+    // OpenAI - 新模型使用 max_completion_tokens
+    if (provider === 'openai') {
+      // 检测是否是新模型（GPT-5.x, o3, o1 等需要 max_completion_tokens）
+      const newModels = ['gpt-5', 'gpt-4.5', 'o3', 'o1', 'gpt-4o']
+      const isNewModel = newModels.some(nm => model.toLowerCase().includes(nm.toLowerCase()))
+      
+      requestBody = {
+        model: model,
+        messages: body.messages,
+        ...(isNewModel ? { max_completion_tokens: 4096 } : { max_tokens: 4096 })
+      }
+    } else if (provider === 'claude') {
       requestBody = {
         model: model || 'claude-3-5-sonnet-20241022',
         max_tokens: body.max_tokens || 4096,
@@ -101,6 +112,16 @@ app.post('/api/proxy/:provider', async (c) => {
         generationConfig: {
           maxOutputTokens: body.max_tokens || 4096
         }
+      }
+    } else if (provider === 'openrouter') {
+      // OpenRouter 也需要根据模型类型处理
+      const newModels = ['gpt-5', 'gpt-4.5', 'o3', 'o1', 'gpt-4o']
+      const isNewModel = newModels.some(nm => model.toLowerCase().includes(nm.toLowerCase()))
+      
+      requestBody = {
+        model: model,
+        messages: body.messages,
+        ...(isNewModel ? { max_completion_tokens: 4096 } : { max_tokens: 4096 })
       }
     }
 
