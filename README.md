@@ -50,34 +50,37 @@
 ### OpenAI
 | 模型 | @ 名称 | 说明 |
 |------|--------|------|
-| GPT-4o | `@gpt-4o` | 最新旗舰模型 |
+| GPT-4.1 | `@gpt-4.1` | 最新旗舰 (2025) |
+| GPT-4.1 Mini | `@gpt-4.1-mini` | 轻量版 |
+| GPT-4o | `@gpt-4o` | 稳定版 |
 | GPT-4o Mini | `@gpt-4o-mini` | 快速经济版 |
 | o1 | `@o1` | 推理模型 |
 | o1-mini | `@o1-mini` | 轻量推理 |
-| GPT-4 Turbo | `@gpt-4-turbo` | 高性能版 |
+| o3-mini | `@o3-mini` | 最新推理 (NEW) |
 
 ### Anthropic Claude
 | 模型 | @ 名称 | 说明 |
 |------|--------|------|
-| Claude Sonnet 4 | `@claude-sonnet-4-20250514` | 最新旗舰 |
-| Claude 3.5 Sonnet | `@claude-3-5-sonnet-20241022` | 性能均衡 |
+| Claude 3.5 Sonnet v2 | `@claude-3-5-sonnet-20250618` | 最新旗舰 (2025) |
+| Claude 3.5 Sonnet | `@claude-3-5-sonnet-20241022` | 稳定版 |
 | Claude 3.5 Haiku | `@claude-3-5-haiku-20241022` | 快速响应 |
 | Claude 3 Opus | `@claude-3-opus-20240229` | 最强能力 |
 
 ### Google Gemini
 | 模型 | @ 名称 | 说明 |
 |------|--------|------|
-| Gemini 2.5 Flash | `@gemini-2.5-flash-preview-05-20` | 最新版本 |
-| Gemini 2.0 Flash | `@gemini-2.0-flash` | 主力模型 |
-| Gemini 1.5 Pro | `@gemini-1.5-pro` | 长上下文 |
+| Gemini 2.0 Flash Exp | `@gemini-2.0-flash-exp` | 最新实验版 |
+| Gemini 2.0 Flash Thinking | `@gemini-2.0-flash-thinking-exp` | 推理版 |
+| Gemini 1.5 Pro | `@gemini-1.5-pro` | 长上下文 (稳定) |
 | Gemini 1.5 Flash | `@gemini-1.5-flash` | 快速响应 |
+| Gemini 1.5 Flash 8B | `@gemini-1.5-flash-8b` | 经济版 |
 
 ### xAI Grok
 | 模型 | @ 名称 | 说明 |
 |------|--------|------|
-| Grok 3 | `@grok-3` | 最新版本 |
-| Grok 3 Fast | `@grok-3-fast` | 快速版 |
 | Grok 2 | `@grok-2-1212` | 稳定版 |
+| Grok Vision | `@grok-vision-beta` | 视觉理解 |
+| Grok Beta | `@grok-beta` | 基础版 |
 
 ### DeepSeek
 | 模型 | @ 名称 | 说明 |
@@ -88,17 +91,19 @@
 
 ### OpenRouter (推荐 - 100+模型)
 一个API Key访问所有主流模型：
-- `@openai/gpt-4o` `@anthropic/claude-sonnet-4` `@google/gemini-2.0-flash-001`
-- `@x-ai/grok-3` `@deepseek/deepseek-chat` `@deepseek/deepseek-r1`
+- `@openai/gpt-4o` `@openai/o1-mini` `@anthropic/claude-3.5-sonnet`
+- `@google/gemini-2.0-flash-exp:free` `@deepseek/deepseek-chat` `@deepseek/deepseek-r1`
 - `@meta-llama/llama-3.3-70b-instruct` `@mistralai/mistral-large-2411`
 
 ### 中国模型
 | 平台 | 模型 | @ 名称 |
 |------|------|--------|
+| 豆包 | 2.0 Pro | `@doubao-2.0-pro` |
 | 豆包 | 1.5 Pro 256K | `@doubao-1.5-pro-256k` |
+| 通义千问 | Qwen 2.5 Max | `@qwen-2.5-max` |
 | 通义千问 | Qwen Max | `@qwen-max-latest` |
-| Kimi | Moonshot Auto | `@moonshot-v1-auto` |
-| 智谱 | GLM-4 Plus | `@glm-4-plus` |
+| Kimi | Moonshot V2 Auto | `@moonshot-v2-auto` |
+| 智谱 | GLM-5 Plus | `@glm-5-plus` |
 
 ## 🚀 快速开始
 
@@ -167,6 +172,14 @@ npm run deploy
 ```
 
 ## 📝 更新日志
+
+### v3.2 (2025-12-27)
+- ✨ 更新至最新AI模型 (2025年12月)
+- 📊 OpenAI: 新增 GPT-4.1, o3-mini
+- 📊 Claude: 更新至 Claude 3.5 Sonnet v2 (20250618)
+- 📊 Gemini: 新增 Gemini 2.0 Flash Exp, Flash Thinking Exp
+- 🔧 优化推理模型 max_tokens 参数处理
+- 🐛 修复多个API提供商的模型配置
 
 ### v3.1 (2025-12-26)
 - 🔧 更新所有模型ID为实际API支持的格式

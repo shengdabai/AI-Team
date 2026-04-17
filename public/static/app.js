@@ -2,7 +2,7 @@
  * AI Team Hub - Main Application v3.0
  * Professional Multi-AI Collaboration Platform
  */
-(function() {
+(function () {
   'use strict';
 
   // ==================== Constants ====================
@@ -13,7 +13,8 @@
     GPTS: 'aiteam_gpts',
     IMPORTED_CONTENT: 'aiteam_imported',
     CUSTOM_MODELS: 'aiteam_custom_models',
-    CURRENT_CHANNEL: 'aiteam_current_channel'
+    CURRENT_CHANNEL: 'aiteam_current_channel',
+    SEARCH_KEY: 'aiteam_search_key'
   };
 
   // Complete AI Models - Updated Dec 2025 (Using actual API model IDs)
@@ -24,15 +25,15 @@
       color: '#10a37f',
       keyName: 'openaiKey',
       models: [
-        { id: 'gpt-4o', name: 'GPT-4o', tag: 'LATEST' },
+        { id: 'gpt-4o', name: 'GPT-4o', tag: 'STABLE' },
         { id: 'gpt-4o-mini', name: 'GPT-4o Mini', tag: 'Fast' },
         { id: 'o1', name: 'o1', tag: 'Reasoning' },
-        { id: 'o1-mini', name: 'o1-mini' },
-        { id: 'o1-preview', name: 'o1 Preview' },
+        { id: 'o1-mini', name: 'o1 Mini' },
+        { id: 'o3-mini', name: 'o3 Mini', tag: 'NEW' },
         { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
-        { id: 'gpt-4-turbo-preview', name: 'GPT-4 Turbo Preview' },
-        { id: 'gpt-4', name: 'GPT-4' },
-        { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', tag: 'Economy' },
+        { id: 'gpt-4.1', name: 'GPT-4.1', tag: 'LATEST' },
+        { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini' },
+        { id: 'chatgpt-4o-latest', name: 'ChatGPT-4o Latest' },
       ]
     },
     claude: {
@@ -41,12 +42,11 @@
       color: '#d97850',
       keyName: 'claudeKey',
       models: [
-        { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', tag: 'LATEST' },
-        { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet' },
+        { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', tag: 'STABLE' },
+        { id: 'claude-3-5-sonnet-20250618', name: 'Claude 3.5 Sonnet v2', tag: 'LATEST' },
         { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', tag: 'Fast' },
-        { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus' },
+        { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', tag: 'Premium' },
         { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet' },
-        { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku' },
       ]
     },
     gemini: {
@@ -55,11 +55,11 @@
       color: '#4285f4',
       keyName: 'geminiKey',
       models: [
-        { id: 'gemini-2.5-flash-preview-05-20', name: 'Gemini 2.5 Flash', tag: 'LATEST' },
-        { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash' },
-        { id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash Lite', tag: 'Fast' },
-        { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
-        { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
+        { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash Exp', tag: 'LATEST' },
+        { id: 'gemini-2.0-flash-thinking-exp', name: 'Gemini 2.0 Flash Thinking', tag: 'Reasoning' },
+        { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', tag: 'STABLE' },
+        { id: 'gemini-1.5-pro-002', name: 'Gemini 1.5 Pro v2' },
+        { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', tag: 'Fast' },
         { id: 'gemini-1.5-flash-8b', name: 'Gemini 1.5 Flash 8B', tag: 'Economy' },
       ]
     },
@@ -69,10 +69,8 @@
       color: '#ffffff',
       keyName: 'grokKey',
       models: [
-        { id: 'grok-3', name: 'Grok 3', tag: 'LATEST' },
-        { id: 'grok-3-fast', name: 'Grok 3 Fast', tag: 'Fast' },
-        { id: 'grok-2-1212', name: 'Grok 2' },
-        { id: 'grok-2-vision-1212', name: 'Grok 2 Vision', tag: 'Vision' },
+        { id: 'grok-2-1212', name: 'Grok 2', tag: 'STABLE' },
+        { id: 'grok-vision-beta', name: 'Grok Vision', tag: 'Vision' },
         { id: 'grok-beta', name: 'Grok Beta' },
       ]
     },
@@ -94,25 +92,14 @@
       keyName: 'openrouterKey',
       models: [
         { id: 'openai/gpt-4o', name: 'GPT-4o', tag: 'HOT' },
-        { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini', tag: 'Fast' },
-        { id: 'openai/o1', name: 'o1', tag: 'Reasoning' },
-        { id: 'openai/o1-mini', name: 'o1-mini' },
-        { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4', tag: 'HOT' },
-        { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet' },
-        { id: 'anthropic/claude-3.5-haiku', name: 'Claude 3.5 Haiku', tag: 'Fast' },
-        { id: 'google/gemini-2.5-flash-preview', name: 'Gemini 2.5 Flash', tag: 'NEW' },
-        { id: 'google/gemini-2.0-flash-001', name: 'Gemini 2.0 Flash' },
-        { id: 'google/gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
-        { id: 'x-ai/grok-3', name: 'Grok 3', tag: 'NEW' },
-        { id: 'deepseek/deepseek-chat', name: 'DeepSeek V3' },
+        { id: 'openai/o1-mini', name: 'o1 Mini', tag: 'NEW' },
+        { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', tag: 'HOT' },
+        { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash', tag: 'FREE' },
+        { id: 'deepseek/deepseek-chat', name: 'DeepSeek V3', tag: 'VALUE' },
         { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1', tag: 'Reasoning' },
         { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B', tag: 'Open' },
         { id: 'mistralai/mistral-large-2411', name: 'Mistral Large' },
-        { id: 'mistralai/codestral-latest', name: 'Codestral', tag: 'Code' },
         { id: 'qwen/qwen-2.5-72b-instruct', name: 'Qwen 2.5 72B' },
-        { id: 'qwen/qwq-32b-preview', name: 'QwQ 32B', tag: 'Reasoning' },
-        { id: 'perplexity/sonar-pro', name: 'Sonar Pro', tag: 'Search' },
-        { id: 'cohere/command-r-plus-08-2024', name: 'Command R+' },
       ]
     },
     doubao: {
@@ -121,12 +108,10 @@
       color: '#ff6b6b',
       keyName: 'doubaoKey',
       models: [
-        { id: 'doubao-1.5-pro-256k', name: '豆包 1.5 Pro 256K', tag: 'LATEST' },
+        { id: 'doubao-2.0-pro', name: '豆包 2.0 Pro', tag: 'LATEST' },
+        { id: 'doubao-1.5-pro-256k', name: '豆包 1.5 Pro 256K' },
         { id: 'doubao-1.5-pro-32k', name: '豆包 1.5 Pro 32K' },
-        { id: 'doubao-1-5-lite-32k', name: '豆包 1.5 Lite 32K', tag: 'Fast' },
-        { id: 'doubao-pro-256k', name: '豆包 Pro 256K' },
-        { id: 'doubao-pro-128k', name: '豆包 Pro 128K' },
-        { id: 'doubao-pro-32k', name: '豆包 Pro 32K' },
+        { id: 'doubao-1.5-lite', name: '豆包 1.5 Lite', tag: 'Fast' },
       ]
     },
     qwen: {
@@ -135,10 +120,10 @@
       color: '#7c3aed',
       keyName: 'qwenKey',
       models: [
-        { id: 'qwen-max-latest', name: 'Qwen Max', tag: 'LATEST' },
+        { id: 'qwen-2.5-max', name: 'Qwen 2.5 Max', tag: 'LATEST' },
+        { id: 'qwen-max-latest', name: 'Qwen Max' },
         { id: 'qwen-plus-latest', name: 'Qwen Plus' },
         { id: 'qwen-turbo-latest', name: 'Qwen Turbo', tag: 'Fast' },
-        { id: 'qwen-long', name: 'Qwen Long', tag: '1M Context' },
         { id: 'qwen-coder-plus', name: 'Qwen Coder Plus', tag: 'Code' },
       ]
     },
@@ -148,10 +133,10 @@
       color: '#fbbf24',
       keyName: 'kimiKey',
       models: [
-        { id: 'moonshot-v1-auto', name: 'Moonshot Auto', tag: 'LATEST' },
+        { id: 'moonshot-v2-auto', name: 'Moonshot V2 Auto', tag: 'LATEST' },
+        { id: 'moonshot-v1-auto', name: 'Moonshot V1 Auto' },
         { id: 'moonshot-v1-128k', name: 'Moonshot 128K' },
-        { id: 'moonshot-v1-32k', name: 'Moonshot 32K' },
-        { id: 'moonshot-v1-8k', name: 'Moonshot 8K', tag: 'Fast' },
+        { id: 'moonshot-v1-32k', name: 'Moonshot 32K', tag: 'Fast' },
       ]
     },
     glm: {
@@ -160,12 +145,19 @@
       color: '#6366f1',
       keyName: 'glmKey',
       models: [
-        { id: 'glm-4-plus', name: 'GLM-4 Plus', tag: 'LATEST' },
-        { id: 'glm-4-0520', name: 'GLM-4' },
+        { id: 'glm-5-plus', name: 'GLM-5 Plus', tag: 'LATEST' },
+        { id: 'glm-4-plus', name: 'GLM-4 Plus' },
         { id: 'glm-4-flash', name: 'GLM-4 Flash', tag: 'Fast' },
-        { id: 'glm-4-air', name: 'GLM-4 Air' },
-        { id: 'glm-4-airx', name: 'GLM-4 AirX' },
         { id: 'glm-4-long', name: 'GLM-4 Long', tag: '1M Context' },
+      ]
+    },
+    search: {
+      name: '联网搜索',
+      icon: 'fa-search',
+      color: '#10b981',
+      keyName: 'searchKey',
+      models: [
+        { id: 'search', name: 'Web Search', tag: 'Realtime' }
       ]
     }
   };
@@ -181,7 +173,9 @@
     currentChannel: 'general',
     currentAttachment: null,
     urlContent: null,
-    expandedProvider: null
+    expandedProvider: null,
+    meetingMode: false,  // 会议模式: AI自动互相讨论
+    meetingRounds: 3     // 会议轮数
   };
 
   // ==================== Storage Functions ====================
@@ -221,12 +215,12 @@
     }
   }
 
-  // ==================== Encryption ====================
-  function encryptKey(key) {
+  // ==================== Key Encoding (Base64) ====================
+  function encodeKey(key) {
     return btoa(key);
   }
 
-  function decryptKey(encrypted) {
+  function decodeKey(encrypted) {
     try {
       return atob(encrypted);
     } catch {
@@ -266,7 +260,7 @@
       const hasKey = state.apiKeys[provider.keyName];
       const statusClass = hasKey ? 'online' : 'offline';
       const isExpanded = state.expandedProvider === providerKey;
-      
+
       html += `
         <div class="provider-group mb-2">
           <div class="provider-header flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-700/30 transition-all ${hasKey ? 'text-white' : 'text-slate-500'}" data-provider="${providerKey}">
@@ -274,8 +268,11 @@
               <span class="status-indicator ${statusClass}"></span>
               <i class="${provider.icon.startsWith('fab') ? provider.icon : 'fas ' + provider.icon}" style="color: ${provider.color}"></i>
               <span class="text-sm font-medium">${provider.name}</span>
+              ${!hasKey ? '<span class="text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded ml-1">未配置</span>' : ''}
             </div>
-            <i class="fas fa-chevron-down text-xs text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}"></i>
+            <div class="flex items-center gap-1">
+              <i class="fas fa-chevron-down text-xs text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}"></i>
+            </div>
           </div>
           <div class="provider-models pl-7 ${isExpanded ? '' : 'hidden'}">
             ${provider.models.slice(0, 6).map(m => `
@@ -293,8 +290,24 @@
     container.innerHTML = html;
 
     container.querySelectorAll('.provider-header').forEach(el => {
-      el.addEventListener('click', () => {
+      el.addEventListener('click', (e) => {
         const provider = el.dataset.provider;
+        const providerConfig = AI_PROVIDERS[provider];
+        const hasKey = state.apiKeys[providerConfig.keyName];
+
+        // If clicking on config icon, always open settings
+        if (e.target.closest('.config-icon')) {
+          openModal('settingsModal');
+          return;
+        }
+
+        // If no API key, prompt to configure
+        if (!hasKey) {
+          showToast(`请先配置 ${providerConfig.name} 的 API Key`, 'info');
+          openModal('settingsModal');
+          return;
+        }
+
         state.expandedProvider = state.expandedProvider === provider ? null : provider;
         renderModels();
       });
@@ -416,9 +429,9 @@
           <h3 class="text-2xl font-bold text-white mb-3">开始智能对话</h3>
           <p class="text-slate-400 mb-6">输入 <code class="bg-slate-700 px-2 py-1 rounded text-blue-400 font-mono">@</code> 选择AI模型开始协作</p>
           <div class="flex flex-wrap gap-2 justify-center">
-            <span class="px-3 py-1.5 rounded-full bg-green-500/20 text-green-400 text-sm">@gpt-5.2</span>
-            <span class="px-3 py-1.5 rounded-full bg-orange-500/20 text-orange-400 text-sm">@claude-opus-4.5</span>
-            <span class="px-3 py-1.5 rounded-full bg-blue-500/20 text-blue-400 text-sm">@gemini-3-pro</span>
+                        <span class="px-3 py-1.5 rounded-full bg-green-500/20 text-green-400 text-sm">@gpt-4o</span>
+                        <span class="px-3 py-1.5 rounded-full bg-orange-500/20 text-orange-400 text-sm">@claude-3.5-sonnet</span>
+                        <span class="px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-400 text-sm">@search</span>
           </div>
         </div>
       `;
@@ -432,7 +445,7 @@
   function renderMessage(msg) {
     const isUser = msg.role === 'user';
     const providerInfo = getProviderForModel(msg.model);
-    
+
     let content = msg.content || '';
     if (!isUser && typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
       try {
@@ -529,13 +542,13 @@
       const model = provider.models.find(m => m.id === modelId || m.id.split('/').pop() === modelId);
       if (model) return model.name;
     }
-    
+
     const gpt = state.gpts.find(g => g.mention === modelId);
     if (gpt) return gpt.name;
-    
+
     const custom = state.customModels.find(m => m.mention === modelId);
     if (custom) return custom.name;
-    
+
     return modelId;
   }
 
@@ -546,12 +559,11 @@
 
     const filterLower = filter.toLowerCase();
     let html = '';
-    
+
     Object.entries(AI_PROVIDERS).forEach(([providerKey, provider]) => {
       const hasKey = state.apiKeys[provider.keyName];
-      if (!hasKey) return;
 
-      const matchingModels = provider.models.filter(m => 
+      const matchingModels = provider.models.filter(m =>
         m.id.toLowerCase().includes(filterLower) ||
         m.name.toLowerCase().includes(filterLower) ||
         providerKey.includes(filterLower)
@@ -568,11 +580,12 @@
           <div class="px-4 py-2.5 flex items-center gap-2 text-sm font-semibold border-b border-slate-700/50" style="color: ${provider.color}">
             <i class="${provider.icon.startsWith('fab') ? provider.icon : 'fas ' + provider.icon}"></i>
             ${provider.name}
+            ${!hasKey ? '<span class="text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded ml-1">未配置</span>' : ''}
             <span class="text-xs text-slate-500 font-normal">${displayModels.length} models</span>
           </div>
           <div class="py-1">
             ${displayModels.map(m => `
-              <div class="mention-item px-4 py-2 flex items-center justify-between hover:bg-blue-500/10 cursor-pointer transition-all" data-model="${m.id}" data-provider="${providerKey}">
+              <div class="mention-item px-4 py-2 flex items-center justify-between hover:bg-blue-500/10 cursor-pointer transition-all ${!hasKey ? 'opacity-60' : ''}" data-model="${m.id}" data-provider="${providerKey}" data-haskey="${hasKey ? 'true' : 'false'}">
                 <div class="flex items-center gap-2">
                   <span class="text-white font-medium">@${m.id.split('/').pop()}</span>
                   <span class="text-xs text-slate-500">${m.name}</span>
@@ -586,7 +599,7 @@
     });
 
     // GPTs
-    const matchingGpts = state.gpts.filter(g => 
+    const matchingGpts = state.gpts.filter(g =>
       g.mention.toLowerCase().includes(filterLower) ||
       g.name.toLowerCase().includes(filterLower)
     );
@@ -609,7 +622,7 @@
     }
 
     // Imported Content
-    const matchingContent = state.importedContent.filter(i => 
+    const matchingContent = state.importedContent.filter(i =>
       i.mention.toLowerCase().includes(filterLower) ||
       i.name.toLowerCase().includes(filterLower)
     );
@@ -632,7 +645,7 @@
     }
 
     // Custom Models
-    const matchingCustom = state.customModels.filter(m => 
+    const matchingCustom = state.customModels.filter(m =>
       m.mention.toLowerCase().includes(filterLower) ||
       m.name.toLowerCase().includes(filterLower)
     );
@@ -665,6 +678,18 @@
     dropdown.querySelectorAll('.mention-item').forEach(el => {
       el.addEventListener('click', () => {
         const model = el.dataset.model || el.dataset.gpt || el.dataset.content || el.dataset.custom;
+        const hasKey = el.dataset.haskey !== 'false';
+
+        // If model has no API key configured, prompt to configure
+        if (!hasKey && el.dataset.model) {
+          const providerKey = el.dataset.provider;
+          const provider = AI_PROVIDERS[providerKey];
+          showToast(`请先配置 ${provider?.name || providerKey} 的 API Key`, 'info');
+          hideMentions();
+          openModal('settingsModal');
+          return;
+        }
+
         if (model) {
           insertMention(model.split('/').pop());
         }
@@ -685,11 +710,11 @@
 
     const text = input.value;
     const atIndex = text.lastIndexOf('@');
-    
+
     if (atIndex !== -1) {
       input.value = text.substring(0, atIndex) + '@' + mention + ' ';
     }
-    
+
     hideMentions();
     input.focus();
   }
@@ -700,7 +725,7 @@
     if (!input) return;
 
     const text = input.value.trim();
-    
+
     if (!text && !state.currentAttachment) {
       return;
     }
@@ -708,13 +733,13 @@
     // Parse mentions
     const mentionRegex = /@([\w\-\.\/]+)/g;
     const mentions = [...text.matchAll(mentionRegex)].map(m => m[1]);
-    
+
     // Find valid AI mentions
     const aiMentions = [];
     mentions.forEach(m => {
       for (const [providerKey, provider] of Object.entries(AI_PROVIDERS)) {
-        const model = provider.models.find(mod => 
-          mod.id === m || 
+        const model = provider.models.find(mod =>
+          mod.id === m ||
           mod.id.split('/').pop() === m ||
           mod.id.endsWith('/' + m)
         );
@@ -723,20 +748,20 @@
           return;
         }
       }
-      
+
       // Check GPTs
       if (state.gpts.find(g => g.mention === m)) {
         aiMentions.push({ model: m, provider: 'openai', isGpt: true });
         return;
       }
-      
+
       // Check custom models
       const custom = state.customModels.find(c => c.mention === m);
       if (custom) {
         aiMentions.push({ model: m, provider: 'custom', customConfig: custom });
       }
     });
-    
+
     // Find context mentions
     const contextMentions = mentions.filter(m => state.importedContent.find(i => i.mention === m));
 
@@ -770,6 +795,11 @@
     for (const ai of aiMentions) {
       await callAI(ai, text, userMessage);
     }
+
+    // Meeting Mode: Let AIs discuss with each other
+    if (state.meetingMode && aiMentions.length >= 2) {
+      await runMeetingMode(aiMentions, text);
+    }
   }
 
   async function callAI(ai, userText, userMessage) {
@@ -778,7 +808,7 @@
 
     try {
       let response;
-      
+
       if (ai.provider === 'custom' && ai.customConfig) {
         response = await callCustomModel(ai.customConfig, userText, userMessage);
       } else {
@@ -798,7 +828,7 @@
 
     } catch (error) {
       console.error('AI call error:', error);
-      
+
       const errorMessage = {
         id: Date.now(),
         role: 'assistant',
@@ -816,8 +846,32 @@
   }
 
   async function callBuiltInModel(ai, userText, userMessage) {
+    // Special handling for Search
+    if (ai.provider === 'search') {
+      const apiKey = decodeKey(state.apiKeys.searchKey);
+      if (!apiKey) throw new Error('请先配置 Web Search API Key (Serper)');
+
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Search-Key': apiKey
+        },
+        body: JSON.stringify({ query: userText })
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      // Format search results
+      const organic = data.organic || [];
+      if (organic.length === 0) return '未找到相关结果。';
+
+      return organic.map((item, i) => `**${i + 1}. [${item.title}](${item.link})**\n${item.snippet}`).join('\n\n');
+    }
+
     const provider = AI_PROVIDERS[ai.provider];
-    const apiKey = decryptKey(state.apiKeys[provider.keyName]);
+    const apiKey = decodeKey(state.apiKeys[provider.keyName]);
 
     if (!apiKey) {
       throw new Error(`请先配置 ${provider.name} 的 API Key`);
@@ -840,7 +894,7 @@
     });
 
     const data = await response.json();
-    
+
     if (data.error) {
       throw new Error(data.error.message || data.error);
     }
@@ -864,40 +918,181 @@
 
     const data = await response.json();
     if (data.error) throw new Error(data.error.message || data.error);
-    
+
     return data.choices?.[0]?.message?.content || '无响应内容';
   }
 
   function buildMessageHistory(currentText, currentMessage) {
     const messages = [];
     const channelMessages = state.messages[state.currentChannel] || [];
-    const recentMessages = channelMessages.slice(-10);
-    
+    // Increase history window
+    const recentMessages = channelMessages.slice(-20);
+
     for (const msg of recentMessages) {
       if (msg.role === 'user') {
-        let content = msg.content;
-        
+        // --- Multimodal & Context Handling ---
+        let content = [];
+
+        // 1. Text Content (User prompt + Context + URL content)
+        let textPart = msg.content;
+
         if (msg.context) {
-          content = `[引用内容: ${msg.context.name}]\n${msg.context.content}\n\n用户问题: ${content}`;
+          textPart = `[引用内容: ${msg.context.name}]\n${msg.context.content}\n\n用户问题: ${textPart}`;
         }
-        
-        if (msg.attachment) {
-          if (msg.attachment.type === 'url') {
-            content = `[网页内容来自: ${msg.attachment.url}]\n${msg.attachment.content}\n\n用户问题: ${content}`;
-          } else if (msg.attachment.type === 'image') {
-            content = `[用户上传了图片: ${msg.attachment.name}]\n\n${content}`;
-          } else {
-            content = `[用户上传了文件: ${msg.attachment.name}]\n${msg.attachment.content || ''}\n\n${content}`;
-          }
+
+        if (msg.attachment && msg.attachment.type === 'url') {
+          textPart = `[网页内容来自: ${msg.attachment.url}]\n${msg.attachment.content}\n\n用户问题: ${textPart}`;
+        } else if (msg.attachment && msg.attachment.type !== 'image') {
+          // Text file
+          textPart = `[用户上传了文件: ${msg.attachment.name}]\n${msg.attachment.content || ''}\n\n${textPart}`;
         }
-        
-        messages.push({ role: 'user', content });
+
+        content.push({ type: 'text', text: textPart });
+
+        // 2. Image Content
+        if (msg.attachment && msg.attachment.type === 'image') {
+          // msg.attachment.data is assumed to be data:image/xyz;base64,....
+          content.push({
+            type: 'image_url',
+            image_url: {
+              url: msg.attachment.data
+            }
+          });
+        }
+
+        // If only one text part, simplify to string (optional, but keep object for consistency if backend supports it)
+        // Note: Our backend transformMessages expects array for multimodal, string for simple
+        // If content has only 1 text item, we CAN send string, but let's see. 
+        // For simplicity, let's keep it as array if it has image, or string if simple text to save weird parsing issues on some old models?
+        // Actually, backend now handles array for Claude/Gemini. OpenAI handles array fine.
+        // Let's optimize: if only text and pure string, send string.
+        if (content.length === 1 && content[0].type === 'text') {
+          messages.push({ role: 'user', content: content[0].text });
+        } else {
+          messages.push({ role: 'user', content: content });
+        }
+
       } else {
         messages.push({ role: 'assistant', content: msg.content });
       }
     }
 
     return messages;
+  }
+
+  // ==================== Meeting Mode (AI Auto-Discussion) ====================
+  async function runMeetingMode(participants, topic) {
+    // 系统提示：告知用户会议开始
+    const systemMessage = {
+      id: Date.now(),
+      role: 'system',
+      model: 'system',
+      content: `🎤 **会议模式已启动**\n\n主题: ${topic}\n参与者: ${participants.map(p => p.model.split('/').pop()).join(', ')}\n轮数: ${state.meetingRounds}`,
+      timestamp: new Date().toISOString()
+    };
+    state.messages[state.currentChannel].push(systemMessage);
+    saveState();
+    renderMessages();
+
+    // 获取当前频道的最新消息作为上下文
+    const channelMessages = state.messages[state.currentChannel] || [];
+
+    // 每轮让每个AI回复其他AI的观点
+    for (let round = 0; round < state.meetingRounds; round++) {
+      for (let i = 0; i < participants.length; i++) {
+        const currentAI = participants[i];
+        const otherAIs = participants.filter((_, idx) => idx !== i);
+        const modelName = currentAI.model.split('/').pop();
+
+        // 获取其他AI的最近回复
+        const recentReplies = channelMessages
+          .filter(m => m.role === 'assistant' && otherAIs.some(o => o.model.split('/').pop() === m.model))
+          .slice(-participants.length);
+
+        if (recentReplies.length === 0 && round > 0) continue;
+
+        // 构建讨论提示
+        let discussPrompt = `你正在参与一个关于"${topic}"的AI团队讨论。`;
+        if (round === 0) {
+          discussPrompt += `\n这是第1轮，请发表你的核心观点（简洁，不超过200字）。`;
+        } else {
+          discussPrompt += `\n这是第${round + 1}轮。请回应其他AI的观点，补充或提出不同看法（简洁，200字以内）。`;
+          discussPrompt += `\n\n其他AI的最新观点：\n`;
+          recentReplies.forEach(r => {
+            discussPrompt += `\n**${r.model}**: ${r.content.substring(0, 300)}...\n`;
+          });
+        }
+        discussPrompt += `\n\n请用${modelName}的风格回答：`;
+
+        showTypingIndicator(modelName);
+
+        try {
+          const provider = AI_PROVIDERS[currentAI.provider];
+          const apiKey = decodeKey(state.apiKeys[provider.keyName]);
+
+          if (!apiKey) continue;
+
+          const response = await fetch(`/api/proxy/${currentAI.provider}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-API-Key': apiKey,
+              'X-Model': currentAI.model
+            },
+            body: JSON.stringify({
+              model: currentAI.model,
+              messages: [{ role: 'user', content: discussPrompt }],
+              max_tokens: 500  // 限制回复长度
+            })
+          });
+
+          const data = await response.json();
+          const content = data.choices?.[0]?.message?.content || '无响应';
+
+          const aiMessage = {
+            id: Date.now() + Math.random(),
+            role: 'assistant',
+            model: modelName,
+            content: `**[第${round + 1}轮]** ${content}`,
+            timestamp: new Date().toISOString()
+          };
+          state.messages[state.currentChannel].push(aiMessage);
+          saveState();
+        } catch (error) {
+          console.error(`Meeting mode error for ${modelName}:`, error);
+        }
+
+        hideTypingIndicator();
+        renderMessages();
+
+        // 短暂延迟，让用户能看到对话流
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
+
+    // 会议结束提示
+    const endMessage = {
+      id: Date.now(),
+      role: 'system',
+      model: 'system',
+      content: `✅ **会议结束** - 共${state.meetingRounds}轮讨论完成`,
+      timestamp: new Date().toISOString()
+    };
+    state.messages[state.currentChannel].push(endMessage);
+    saveState();
+    renderMessages();
+  }
+
+  function toggleMeetingMode() {
+    state.meetingMode = !state.meetingMode;
+    const btn = document.getElementById('meetingModeBtn');
+    if (btn) {
+      btn.className = state.meetingMode
+        ? 'p-2.5 rounded-xl bg-green-600 text-white transition-all'
+        : 'p-2.5 rounded-xl bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white transition-all';
+      btn.title = state.meetingMode ? '会议模式: 开启' : '会议模式: 关闭';
+    }
+    showToast(state.meetingMode ? '会议模式已开启 - @多个AI将自动讨论' : '会议模式已关闭', 'info');
   }
 
   function showTypingIndicator(model) {
@@ -941,7 +1136,7 @@
     if (!file) return;
 
     const reader = new FileReader();
-    
+
     if (file.type.startsWith('image/')) {
       reader.onload = (e) => {
         state.currentAttachment = {
@@ -1011,7 +1206,7 @@
 
     try {
       showToast('正在获取网页内容...', 'info');
-      
+
       const response = await fetch('/api/fetch-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1019,7 +1214,7 @@
       });
 
       const data = await response.json();
-      
+
       if (data.error) {
         throw new Error(data.error);
       }
@@ -1035,7 +1230,7 @@
       const fileIcon = document.getElementById('fileIcon');
       if (fileName) fileName.textContent = url;
       if (fileIcon) fileIcon.className = 'fas fa-link text-blue-400';
-      
+
       closeModal('urlModal');
       if (urlInput) urlInput.value = '';
       showToast('网页内容已添加', 'success');
@@ -1071,9 +1266,42 @@
     showToast('频道已创建', 'success');
   }
 
+  // Create channel from modal inputs
+  function createChannel() {
+    const nameInput = document.getElementById('newChannelName');
+    const descInput = document.getElementById('newChannelDesc');
+
+    const name = nameInput?.value?.trim();
+    const desc = descInput?.value?.trim() || '';
+
+    if (!name) {
+      showToast('请输入频道名称', 'error');
+      return;
+    }
+
+    const id = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\u4e00-\u9fa5-]/g, '');
+    if (state.channels.find(c => c.id === id)) {
+      showToast('频道已存在', 'error');
+      return;
+    }
+
+    state.channels.push({ id, name, desc });
+    state.messages[id] = [];
+    saveState();
+    renderChannels();
+    switchChannel(id);
+
+    // Clear inputs and close modal
+    if (nameInput) nameInput.value = '';
+    if (descInput) descInput.value = '';
+    closeModal('newChannelModal');
+
+    showToast(`频道 #${name} 已创建`, 'success');
+  }
+
   // ==================== GPTs Import ====================
   async function importGpts() {
-    const apiKey = decryptKey(state.apiKeys.openaiKey);
+    const apiKey = decodeKey(state.apiKeys.openaiKey);
     if (!apiKey) {
       showToast('请先配置 OpenAI API Key', 'error');
       return;
@@ -1081,14 +1309,14 @@
 
     try {
       showToast('正在获取GPTs列表...', 'info');
-      
+
       const response = await fetch('/api/gpts/list', {
         method: 'POST',
         headers: { 'X-API-Key': apiKey }
       });
 
       const data = await response.json();
-      
+
       if (data.error) {
         throw new Error(data.error);
       }
@@ -1130,7 +1358,7 @@
     }
 
     const mention = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').substring(0, 20);
-    
+
     state.importedContent.push({
       name,
       source,
@@ -1142,10 +1370,10 @@
     saveState();
     renderImportedContent();
     closeModal('importContentModal');
-    
+
     if (nameEl) nameEl.value = '';
     if (textEl) textEl.value = '';
-    
+
     showToast(`内容已导入，使用 @${mention} 引用`, 'success');
   }
 
@@ -1154,20 +1382,33 @@
     Object.values(AI_PROVIDERS).forEach(provider => {
       const input = document.getElementById(provider.keyName);
       if (input && state.apiKeys[provider.keyName]) {
-        input.value = decryptKey(state.apiKeys[provider.keyName]);
+        input.value = decodeKey(state.apiKeys[provider.keyName]);
       }
     });
+
+    const searchInput = document.getElementById('searchKey');
+    if (searchInput && state.apiKeys.searchKey) {
+      searchInput.value = decodeKey(state.apiKeys.searchKey);
+    }
   }
 
   function saveApiKeys() {
     Object.values(AI_PROVIDERS).forEach(provider => {
       const input = document.getElementById(provider.keyName);
       if (input && input.value.trim()) {
-        state.apiKeys[provider.keyName] = encryptKey(input.value.trim());
+        state.apiKeys[provider.keyName] = encodeKey(input.value.trim());
       } else if (input) {
         delete state.apiKeys[provider.keyName];
       }
     });
+
+    // Save Search Key
+    const searchInput = document.getElementById('searchKey');
+    if (searchInput && searchInput.value.trim()) {
+      state.apiKeys.searchKey = encodeKey(searchInput.value.trim());
+    } else if (searchInput) {
+      delete state.apiKeys.searchKey;
+    }
 
     saveState();
     renderModels();
@@ -1188,14 +1429,14 @@
     messages.forEach(msg => {
       const author = msg.role === 'user' ? 'Tony' : getModelDisplayName(msg.model);
       const time = formatTime(msg.timestamp);
-      
+
       markdown += `### ${author} (${time})\n\n`;
       markdown += msg.content + '\n\n';
-      
+
       if (msg.attachment) {
         markdown += `> 附件: ${msg.attachment.name || msg.attachment.url}\n\n`;
       }
-      
+
       markdown += '---\n\n';
     });
 
@@ -1226,7 +1467,7 @@
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target?.result);
-        
+
         if (data.channels) state.channels = data.channels;
         if (data.messages) state.messages = data.messages;
         if (data.gpts) state.gpts = data.gpts;
@@ -1268,7 +1509,7 @@
     }
 
     const mention = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    
+
     state.customModels.push({
       name,
       mention,
@@ -1280,12 +1521,12 @@
 
     saveState();
     renderCustomModels();
-    
+
     if (nameEl) nameEl.value = '';
     if (endpointEl) endpointEl.value = '';
     if (modelIdEl) modelIdEl.value = '';
     if (apiKeyEl) apiKeyEl.value = '';
-    
+
     showToast(`自定义模型已添加，使用 @${mention} 调用`, 'success');
   }
 
@@ -1353,7 +1594,7 @@
     toast.className = `toast ${type}`;
     toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-2"></i>${escapeHtml(message)}`;
     document.body.appendChild(toast);
-    
+
     setTimeout(() => toast.remove(), 3500);
   }
 
@@ -1387,7 +1628,7 @@
           e.preventDefault();
           sendMessage();
         }
-        
+
         if (e.key === 'Escape') {
           hideMentions();
         }
@@ -1396,7 +1637,7 @@
       messageInput.addEventListener('input', (e) => {
         const text = e.target.value;
         const atIndex = text.lastIndexOf('@');
-        
+
         if (atIndex !== -1 && atIndex === text.length - 1) {
           showMentions();
         } else if (atIndex !== -1) {
@@ -1447,7 +1688,7 @@
 
     const newChannelBtn = document.getElementById('newChannelBtn');
     if (newChannelBtn) {
-      newChannelBtn.addEventListener('click', createNewChannel);
+      newChannelBtn.addEventListener('click', () => openModal('newChannelModal'));
     }
 
     const settingsBtn = document.getElementById('settingsBtn');
@@ -1492,6 +1733,17 @@
     const closeImportContent = document.getElementById('closeImportContent');
     if (closeImportContent) {
       closeImportContent.addEventListener('click', () => closeModal('importContentModal'));
+    }
+
+    // New Channel Modal - close and create handlers
+    const closeNewChannel = document.getElementById('closeNewChannel');
+    if (closeNewChannel) {
+      closeNewChannel.addEventListener('click', () => closeModal('newChannelModal'));
+    }
+
+    const createChannelBtn = document.getElementById('createChannelBtn');
+    if (createChannelBtn) {
+      createChannelBtn.addEventListener('click', createChannel);
     }
 
     const saveImportContentBtn = document.getElementById('saveImportContent');
@@ -1566,7 +1818,9 @@
       });
     }
 
-    console.log('AI Team Hub v3.0 initialized');
+    // Expose toggleMeetingMode to global scope for inline onclick handler
+    window.toggleMeetingMode = toggleMeetingMode;
+
   }
 
   // Start the app

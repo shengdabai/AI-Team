@@ -6,13 +6,84 @@ const app = new Hono()
 
 // Enable CORS for API routes
 app.use('/api/*', cors({
-  origin: '*',
+  origin: [
+    'https://ai-team.pages.dev',
+    'https://ai-team-hub.pages.dev',
+    'http://localhost:8788',
+    'http://localhost:3000',
+  ],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Provider', 'X-Model'],
+  allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Search-Key', 'X-Model'],
 }))
 
 // Serve static files
 app.use('/static/*', serveStatic())
+
+// --- Helpers ---
+
+// Transform OpenAI-like message format to provider-specific format
+function transformMessages(provider: string, messages: any[]) {
+  if (provider === 'claude') {
+    return messages.map(m => {
+      const content = []
+      if (typeof m.content === 'string') {
+        content.push({ type: 'text', text: m.content })
+      } else if (Array.isArray(m.content)) {
+        m.content.forEach((c: any) => {
+          if (c.type === 'text') {
+            content.push({ type: 'text', text: c.text })
+          } else if (c.type === 'image_url') {
+            // OpenAI: data:image/jpeg;base64,.....
+            const parts = c.image_url.url.split(';')
+            const mimeType = parts[0].split(':')[1]
+            const base64Data = parts[1].split(',')[1]
+            content.push({
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mimeType,
+                data: base64Data
+              }
+            })
+          }
+        })
+      }
+      return { role: m.role, content }
+    })
+  }
+
+  if (provider === 'gemini') {
+    return messages.map(m => {
+      const parts = []
+      if (typeof m.content === 'string') {
+        parts.push({ text: m.content })
+      } else if (Array.isArray(m.content)) {
+        m.content.forEach((c: any) => {
+          if (c.type === 'text') {
+            parts.push({ text: c.text })
+          } else if (c.type === 'image_url') {
+            const partsSplitted = c.image_url.url.split(';')
+            const mimeType = partsSplitted[0].split(':')[1]
+            const base64Data = partsSplitted[1].split(',')[1]
+            parts.push({
+              inlineData: {
+                mimeType: mimeType,
+                data: base64Data
+              }
+            })
+          }
+        })
+      }
+      return {
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts
+      }
+    })
+  }
+
+  // OpenAI / DeepSeek / Grok / OpenRouter (Native Support for OpenAI format)
+  return messages;
+}
 
 // API Proxy for AI providers (handles CORS issues)
 app.post('/api/proxy/:provider', async (c) => {
@@ -20,7 +91,7 @@ app.post('/api/proxy/:provider', async (c) => {
   const body = await c.req.json()
   const apiKey = c.req.header('X-API-Key')
   const modelOverride = c.req.header('X-Model')
-  
+
   if (!apiKey) {
     return c.json({ error: 'API Key required' }, 401)
   }
@@ -34,7 +105,7 @@ app.post('/api/proxy/:provider', async (c) => {
     },
     claude: {
       url: 'https://api.anthropic.com/v1/messages',
-      headers: { 
+      headers: {
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01'
       }
@@ -69,7 +140,7 @@ app.post('/api/proxy/:provider', async (c) => {
     },
     openrouter: {
       url: 'https://openrouter.ai/api/v1/chat/completions',
-      headers: { 
+      headers: {
         'Authorization': `Bearer ${apiKey}`,
         'HTTP-Referer': 'https://ai-team.pages.dev',
         'X-Title': 'AI Team Hub'
@@ -83,56 +154,36 @@ app.post('/api/proxy/:provider', async (c) => {
   }
 
   try {
-    let requestBody = body
+    let requestBody: any = { ...body }
     requestBody.model = model
-    
-    // OpenAI - 新模型使用 max_completion_tokens
-    if (provider === 'openai') {
-      // 检测是否是需要 max_completion_tokens 的模型 (o1, o3 系列等推理模型)
-      const reasoningModels = ['o3', 'o1']
-      const isReasoningModel = reasoningModels.some(nm => model.toLowerCase().startsWith(nm))
-      
-      // 构建请求体
+
+    // Transform messages based on provider
+    const transformedMessages = transformMessages(provider, body.messages)
+
+    if (provider === 'gemini') {
       requestBody = {
-        model: model,
-        messages: body.messages
-      }
-      
-      // 推理模型不支持 max_tokens，使用 max_completion_tokens
-      if (isReasoningModel) {
-        requestBody.max_completion_tokens = 4096
-      } else {
-        requestBody.max_tokens = body.max_tokens || 4096
-      }
-    } else if (provider === 'claude') {
-      requestBody = {
-        model: model || 'claude-3-5-sonnet-20241022',
-        max_tokens: body.max_tokens || 4096,
-        messages: body.messages
-      }
-    } else if (provider === 'gemini') {
-      requestBody = {
-        contents: body.messages.map((m: any) => ({
-          role: m.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: m.content }]
-        })),
+        contents: transformedMessages,
         generationConfig: {
           maxOutputTokens: body.max_tokens || 4096
         }
       }
-    } else if (provider === 'openrouter') {
-      // OpenRouter 对于推理模型也需要特殊处理
-      const reasoningModels = ['o3', 'o1', 'deepseek-r1', 'qwq']
-      const modelShort = model.split('/').pop()?.toLowerCase() || ''
-      const isReasoningModel = reasoningModels.some(nm => modelShort.startsWith(nm) || modelShort.includes(nm))
-      
+    } else if (provider === 'claude') {
       requestBody = {
         model: model,
-        messages: body.messages
+        max_tokens: body.max_tokens || 4096,
+        messages: transformedMessages
       }
-      
-      if (isReasoningModel) {
+    } else {
+      // Standard OpenAI format
+      requestBody.messages = transformedMessages
+
+      // Handle reasoning models (OpenAI o1, o3 series and DeepSeek R1)
+      const reasoningModels = ['o1', 'o1-mini', 'o1-preview', 'o3', 'o3-mini', 'deepseek-r1', 'deepseek-reasoner']
+      const isReasoning = reasoningModels.some(rm => model.includes(rm))
+
+      if (isReasoning) {
         requestBody.max_completion_tokens = 4096
+        delete requestBody.max_tokens
       } else {
         requestBody.max_tokens = body.max_tokens || 4096
       }
@@ -147,10 +198,11 @@ app.post('/api/proxy/:provider', async (c) => {
       body: JSON.stringify(requestBody)
     })
 
-    const data = await response.json()
-    
+    const data: any = await response.json()
+
+    // Normalize response to OpenAI format
     let normalizedResponse = data
-    
+
     if (provider === 'claude' && data.content) {
       normalizedResponse = {
         choices: [{
@@ -177,10 +229,65 @@ app.post('/api/proxy/:provider', async (c) => {
   }
 })
 
+// Search Endpoint (using Google Custom Search or Serper)
+app.post('/api/search', async (c) => {
+  const { query } = await c.req.json()
+  const apiKey = c.req.header('X-Search-Key')
+
+  if (!apiKey) {
+    return c.json({ error: 'Search API Key required' }, 401)
+  }
+
+  try {
+    const response = await fetch('https://google.serper.dev/search', {
+      method: 'POST',
+      headers: {
+        'X-API-KEY': apiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ q: query })
+    })
+
+    const data = await response.json()
+    return c.json(data)
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+  }
+})
+
 // Fetch URL content for analysis
 app.post('/api/fetch-url', async (c) => {
   const { url } = await c.req.json()
-  
+
+  // Validate URL to prevent SSRF attacks
+  try {
+    const parsed = new URL(url)
+
+    if (parsed.protocol !== 'https:') {
+      return c.json({ error: 'Only HTTPS URLs are allowed' }, 400)
+    }
+
+    const hostname = parsed.hostname.toLowerCase()
+    const privatePatterns = [
+      /^localhost$/,
+      /^127\.\d+\.\d+\.\d+$/,
+      /^10\.\d+\.\d+\.\d+$/,
+      /^192\.168\.\d+\.\d+$/,
+      /^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/,
+      /^169\.254\.\d+\.\d+$/,
+      /^0\.0\.0\.0$/,
+      /^\[::1\]$/,
+      /^\[::ffff:127\./,
+      /^0+$/,
+    ]
+
+    if (privatePatterns.some(pattern => pattern.test(hostname))) {
+      return c.json({ error: 'Access to private/internal addresses is not allowed' }, 403)
+    }
+  } catch {
+    return c.json({ error: 'Invalid URL format' }, 400)
+  }
+
   try {
     const response = await fetch(url, {
       headers: {
@@ -188,7 +295,7 @@ app.post('/api/fetch-url', async (c) => {
       }
     })
     const html = await response.text()
-    
+
     const textContent = html
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -196,7 +303,7 @@ app.post('/api/fetch-url', async (c) => {
       .replace(/\s+/g, ' ')
       .trim()
       .substring(0, 10000)
-    
+
     return c.json({ content: textContent, url })
   } catch (error: any) {
     return c.json({ error: error.message }, 500)
@@ -206,7 +313,7 @@ app.post('/api/fetch-url', async (c) => {
 // OpenAI GPTs list endpoint
 app.post('/api/gpts/list', async (c) => {
   const apiKey = c.req.header('X-API-Key')
-  
+
   if (!apiKey) {
     return c.json({ error: 'API Key required' }, 401)
   }
@@ -218,7 +325,7 @@ app.post('/api/gpts/list', async (c) => {
         'OpenAI-Beta': 'assistants=v2'
       }
     })
-    
+
     const data = await response.json()
     return c.json(data)
   } catch (error: any) {
@@ -460,12 +567,15 @@ app.get('/', (c) => {
                 <!-- Input -->
                 <div class="flex items-end gap-3">
                     <div class="flex gap-1">
-                        <label class="w-11 h-11 rounded-xl hover:bg-slate-700/50 flex items-center justify-center text-slate-400 hover:text-blue-400 cursor-pointer transition-all">
+                        <label class="w-11 h-11 rounded-xl hover:bg-slate-700/50 flex items-center justify-center text-slate-400 hover:text-blue-400 cursor-pointer transition-all" title="上传文件">
                             <i class="fas fa-paperclip text-lg"></i>
                             <input type="file" id="fileInput" class="hidden" accept="image/*,.pdf,.txt,.md,.json,.csv" />
                         </label>
-                        <button id="urlBtn" class="w-11 h-11 rounded-xl hover:bg-slate-700/50 flex items-center justify-center text-slate-400 hover:text-blue-400 transition-all">
+                        <button id="urlBtn" class="w-11 h-11 rounded-xl hover:bg-slate-700/50 flex items-center justify-center text-slate-400 hover:text-blue-400 transition-all" title="分析网页">
                             <i class="fas fa-link text-lg"></i>
+                        </button>
+                        <button id="meetingModeBtn" onclick="toggleMeetingMode()" class="p-2.5 rounded-xl bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white transition-all" title="会议模式: 关闭">
+                            <i class="fas fa-users text-lg"></i>
                         </button>
                     </div>
                     
@@ -487,7 +597,7 @@ app.get('/', (c) => {
                 <div class="text-xs text-slate-500 mt-3 flex items-center gap-5 px-1">
                     <span><kbd class="bg-slate-700 px-1.5 py-0.5 rounded text-slate-300">Enter</kbd> 发送</span>
                     <span><kbd class="bg-slate-700 px-1.5 py-0.5 rounded text-slate-300">@</kbd> 选择模型</span>
-                    <span><i class="fas fa-paperclip mr-1"></i>支持文件/图片</span>
+                    <span><i class="fas fa-users mr-1"></i>会议模式</span>
                 </div>
             </div>
         </main>
@@ -520,6 +630,15 @@ app.get('/', (c) => {
                         </label>
                         <input type="password" id="openrouterKey" class="w-full input-field rounded-lg px-4 py-3 text-sm" placeholder="sk-or-v1-..." />
                         <p class="text-xs text-slate-400 mt-2">一个API Key访问OpenAI、Claude、Gemini等100+模型</p>
+                    </div>
+                    
+                    <div class="p-5 rounded-xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 border border-emerald-500/30">
+                        <label class="block text-sm font-semibold mb-2 text-white">
+                            <i class="fas fa-search text-emerald-400 mr-2"></i>Web Search API Key (Serper.dev)
+                            <span class="ml-2 text-[10px] bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-2.5 py-1 rounded-full font-bold">联网搜索</span>
+                        </label>
+                        <input type="password" id="searchKey" class="w-full input-field rounded-lg px-4 py-3 text-sm" placeholder="Search API Key..." />
+                        <p class="text-xs text-slate-400 mt-2">注册 Serper.dev 获取免费 Key，支持 @search 联网搜索</p>
                     </div>
                     
                     <div class="border-t border-slate-700/50 pt-5">
@@ -629,6 +748,31 @@ app.get('/', (c) => {
                 </div>
                 <button id="saveImportContent" class="w-full h-12 rounded-xl btn-primary text-white font-semibold">
                     <i class="fas fa-save mr-2"></i>保存内容
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- New Channel Modal -->
+    <div id="newChannelModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="glass-panel rounded-2xl w-full max-w-md shadow-2xl">
+            <div class="p-5 border-b border-slate-700/50 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-white"><i class="fas fa-hashtag text-blue-400 mr-2"></i>创建新频道</h2>
+                <button id="closeNewChannel" class="w-9 h-9 rounded-lg hover:bg-slate-700/50 flex items-center justify-center text-slate-400 hover:text-white transition-all">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">频道名称</label>
+                    <input type="text" id="newChannelName" class="w-full input-field rounded-lg px-4 py-2.5" placeholder="例如: product-design" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">频道描述</label>
+                    <input type="text" id="newChannelDesc" class="w-full input-field rounded-lg px-4 py-2.5" placeholder="频道用途说明..." />
+                </div>
+                <button id="createChannelBtn" class="w-full h-12 rounded-xl btn-primary text-white font-semibold">
+                    <i class="fas fa-plus mr-2"></i>创建频道
                 </button>
             </div>
         </div>
