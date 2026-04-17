@@ -211,4 +211,211 @@ MIT License
 
 ---
 
+# AI Team Hub 🤖
+
+**Intelligent Multi-Model AI Collaboration Platform** - In a Slack-like interface, mention different AI models with @ to form your AI team and solve complex problems.
+
+## 🌐 Online Access
+
+**Production**: https://ai-team.pages.dev
+
+**GitHub Repository**: https://github.com/shengdabai/AI-Team
+
+## ✨ Core Features
+
+### 🎯 Multi-Model Chat (Priority 1)
+- Type `@` to select AI models, supporting second-level menu for specific versions
+- Support mentioning multiple models simultaneously for answer comparison
+- Support for 20+ mainstream AI models
+
+### 📎 File/Image Upload Analysis (Priority 1)
+- Support for images, PDFs, text, Markdown, JSON, CSV formats
+- Automatically uploaded content is sent to AI as context
+
+### 🔗 Web Page Link Analysis (Priority 1)
+- Automatically extract web page content from URLs
+- Used as context for AI analysis
+
+### 🪄 GPTs Import (Priority 2)
+- One-click import of OpenAI Assistants
+- Import and call directly via @ after import
+
+### 📚 Content Import (Priority 2)
+- Support importing content from GetNote and NotebookLM
+- Can be referenced as context after import
+
+### 💾 Chat History + Export (Priority 3)
+- Automatically save conversations locally
+- One-click export to Markdown format
+
+### ⚙️ Custom Models (Priority 4)
+- Add any OpenAI compatible API
+- Custom endpoint, model ID, API Key
+
+## 🤖 Supported AI Models (using actual API model IDs)
+
+### OpenAI
+| Model | @ Name | Description |
+|------|--------|------|
+| GPT-4.1 | `@gpt-4.1` | Latest flagship (2025) |
+| GPT-4.1 Mini | `@gpt-4.1-mini` | Lightweight version |
+| GPT-4o | `@gpt-4o` | Stable version |
+| GPT-4o Mini | `@gpt-4o-mini` | Fast economical version |
+| o1 | `@o1` | Reasoning model |
+| o1-mini | `@o1-mini` | Lightweight reasoning |
+| o3-mini | `@o3-mini` | Latest reasoning (NEW) |
+
+### Anthropic Claude
+| Model | @ Name | Description |
+|------|--------|------|
+| Claude 3.5 Sonnet v2 | `@claude-3.5-sonnet-20250618` | Latest flagship (2025) |
+| Claude 3.5 Sonnet | `@claude-3.5-sonnet-20241022` | Stable version |
+| Claude 3.5 Haiku | `@claude-3.5-haiku-20241022` | Fast response |
+| Claude 3 Opus | `@claude-3-opus-20240229` | Most capable |
+
+### Google Gemini
+| Model | @ Name | Description |
+|------|--------|------|
+| Gemini 2.0 Flash Exp | `@gemini-2.0-flash-exp` | Latest experimental |
+| Gemini 2.0 Flash Thinking | `@gemini-2.0-flash-thinking-exp` | Reasoning version |
+| Gemini 1.5 Pro | `@gemini-1.5-pro` | Long context (stable) |
+| Gemini 1.5 Flash | `@gemini-1.5-flash` | Fast response |
+| Gemini 1.5 Flash 8B | `@gemini-1.5-flash-8b` | Economical version |
+
+### xAI Grok
+| Model | @ Name | Description |
+|------|--------|------|
+| Grok 2 | `@grok-2-1212` | Stable version |
+| Grok Vision | `@grok-vision-beta` | Visual understanding |
+| Grok Beta | `@grok-beta` | Basic version |
+
+### DeepSeek
+| Model | @ Name | Description |
+|------|--------|------|
+| DeepSeek V3 | `@deepseek-chat` | Latest version |
+| DeepSeek R1 | `@deepseek-reasoner` | Reasoning model |
+| DeepSeek Coder | `@deepseek-coder` | Code expert |
+
+### OpenRouter (Recommended - 100+ models)
+One API Key to access all mainstream models:
+- `@openai/gpt-4o` `@openai/o1-mini` `@anthropic/claude-3.5-sonnet`
+- `@google/gemini-2.0-flash-exp:free` `@deepseek/deepseek-chat` `@deepseek/deepseek-r1`
+- `@meta-llama/llama-3.3-70b-instruct` `@mistralai/mistral-large-2411`
+
+### Chinese Models
+| Platform | Model | @ Name |
+|------|------|--------|
+| 豆包 | 2.0 Pro | `@doubao-2.0-pro` |
+| 豆包 | 1.5 Pro 256K | `@doubao-1.5-pro-256k` |
+| 通义千问 | Qwen 2.5 Max | `@qwen-2.5-max` |
+| 通义千问 | Qwen Max | `@qwen-max-latest` |
+| Kimi | Moonshot V2 Auto | `@moonshot-v2-auto` |
+| 智谱 | GLM-5 Plus | `@glm-5-plus` |
+
+## 🚀 Quick Start
+
+### 1. Configure API Key
+1. Open Settings ⚙️
+2. Enter API Key (Recommended OpenRouter, one key for 100+ models)
+3. Save
+
+### 2. Start Chatting
+```
+@gpt-4o Hello, introduce yourself
+```
+
+### 3. Multi-Model Collaboration
+```
+@claude-3.5-sonnet-20241022 @gemini-2.0-flash Analyze and compare: Impact of AI on education
+```
+
+### 4. Upload File Analysis
+1. Click 📎 to upload file
+2. Enter question, select model
+3. Send
+
+### 5. Web Page Link Analysis
+1. Click 🔗
+2. Enter web page URL
+3. Get content and ask questions
+
+## 🛠️ Technical Architecture
+
+- **Frontend**: TailwindCSS + Vanilla JS
+- **Backend**: Hono (Cloudflare Workers)
+- **Deployment**: Cloudflare Pages
+- **Storage**: LocalStorage (client-side)
+
+## 📁 Project Structure
+
+```
+AI-Team/
+├── src/
+│   └── index.tsx         # Hono backend + HTML
+├── public/
+│   └── static/
+│       └── app.js        # Frontend application logic
+├── dist/                  # Build output
+├── ecosystem.config.cjs   # PM2 configuration
+├── wrangler.jsonc        # Cloudflare configuration
+├── vite.config.ts        # Vite build configuration
+└── package.json
+```
+
+## 💻 Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Build
+npm run build
+
+# Local development
+npm run preview
+
+# Deploy
+npm run deploy
+```
+
+## 📝 Changelog
+
+### v3.2 (2025-12-27)
+- ✨ Updated to latest AI models (December 2025)
+- 📊 OpenAI: Added GPT-4.1, o3-mini
+- 📊 Claude: Updated to Claude 3.5 Sonnet v2 (20250618)
+- 📊 Gemini: Added Gemini 2.0 Flash Exp, Flash Thinking Exp
+- 🔧 Optimized reasoning model max_tokens parameter handling
+- 🐛 Fixed model configurations for multiple API providers
+
+### v3.1 (2025-12-26)
+- 🔧 Updated all model IDs to actual API-supported formats
+- 🐛 Fixed max_tokens parameter issue (reasoning models use max_completion_tokens)
+- 📊 OpenAI: gpt-4o, o1, o1-mini etc.
+- 📊 Gemini: gemini-2.0-flash, gemini-1.5-pro etc.
+- 📊 Claude: claude-3.5-sonnet-20241022, claude-3-opus-20240229 etc.
+
+### v3.0 (2025-12-26)
+- 🎨 Brand new professional interface design
+- 🐛 Fixed message sending functionality
+- 🔧 Fixed JavaScript CDN library conflicts
+- 📱 Optimized responsive layout
+
+### v2.0 (2025-12-26)
+- ✅ Added OpenRouter support (100+ models)
+- 📋 Upgraded model selector to second-level menu
+
+### v1.0 (2025-12-26)
+- 🚀 Initial version release
+- 💬 Slack-style multi-model chat
+- 📎 File/image upload
+- 🔗 Web page link analysis
+- 💾 Local chat history saving
+
+## 📄 License
+
+MIT License
+
+---
+
 Made with ❤️ by Tony
