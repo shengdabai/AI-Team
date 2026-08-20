@@ -21,6 +21,36 @@
     return safeModel;
   }
 
+  function clearPersistedSecrets() {
+    for (const key of LEGACY_SECRET_STORAGE_KEYS) {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // Continue attempting every secret-bearing key independently.
+      }
+    }
+
+    let customModels;
+    try {
+      customModels = localStorage.getItem(STORAGE_KEYS.CUSTOM_MODELS);
+    } catch {
+      return;
+    }
+    if (!customModels) return;
+
+    try {
+      const sanitizedModels = JSON.parse(customModels).map(withoutApiKey);
+      state.customModels = sanitizedModels;
+      localStorage.setItem(STORAGE_KEYS.CUSTOM_MODELS, JSON.stringify(sanitizedModels));
+    } catch {
+      try {
+        localStorage.removeItem(STORAGE_KEYS.CUSTOM_MODELS);
+      } catch {
+        // Storage is unavailable; the application still keeps no parsed secret in memory.
+      }
+    }
+  }
+
   // Complete AI Models - Updated Dec 2025 (Using actual API model IDs)
   const AI_PROVIDERS = {
     openai: {
@@ -184,30 +214,20 @@
 
   // ==================== Storage Functions ====================
   function loadState() {
+    // Secret cleanup must run before and independently from parsing non-sensitive caches.
+    clearPersistedSecrets();
+
     try {
-      LEGACY_SECRET_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
       const channels = localStorage.getItem(STORAGE_KEYS.CHANNELS);
       const messages = localStorage.getItem(STORAGE_KEYS.MESSAGES);
       const gpts = localStorage.getItem(STORAGE_KEYS.GPTS);
       const imported = localStorage.getItem(STORAGE_KEYS.IMPORTED_CONTENT);
-      const custom = localStorage.getItem(STORAGE_KEYS.CUSTOM_MODELS);
       const channel = localStorage.getItem(STORAGE_KEYS.CURRENT_CHANNEL);
 
       if (channels) state.channels = JSON.parse(channels);
       if (messages) state.messages = JSON.parse(messages);
       if (gpts) state.gpts = JSON.parse(gpts);
       if (imported) state.importedContent = JSON.parse(imported);
-      if (custom) {
-        try {
-          state.customModels = JSON.parse(custom).map(withoutApiKey);
-          localStorage.setItem(
-            STORAGE_KEYS.CUSTOM_MODELS,
-            JSON.stringify(state.customModels)
-          );
-        } catch {
-          localStorage.removeItem(STORAGE_KEYS.CUSTOM_MODELS);
-        }
-      }
       if (channel) state.currentChannel = channel;
     } catch (e) {
       console.error('Error loading state:', e);

@@ -9,7 +9,12 @@ test('API keys are memory-only and custom model persistence is sanitized', async
   assert.doesNotMatch(source, /API_KEYS:\s*'aiteam_api_keys'/);
   assert.doesNotMatch(source, /function (?:encodeKey|decodeKey)|\bbtoa\(|\batob\(/);
   assert.match(source, /state\.customModels\.map\(withoutApiKey\)/);
-  assert.match(source, /LEGACY_SECRET_STORAGE_KEYS\.forEach\(key => localStorage\.removeItem\(key\)\)/);
+  assert.match(source, /function clearPersistedSecrets\(\)/);
+  assert.match(source, /clearPersistedSecrets\(\);/);
+  assert.ok(
+    source.indexOf('clearPersistedSecrets();') < source.indexOf('JSON.parse(channels)'),
+    'secret migration runs before parsing unrelated caches',
+  );
 });
 
 test('public outbound endpoints are default-off', async () => {
