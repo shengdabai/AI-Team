@@ -2,7 +2,11 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/cloudflare-pages'
 
-const app = new Hono()
+type Bindings = {
+  ENABLE_PUBLIC_UPSTREAM_PROXY?: string
+}
+
+const app = new Hono<{ Bindings: Bindings }>()
 
 // Enable CORS for API routes
 app.use('/api/*', cors({
@@ -87,6 +91,10 @@ function transformMessages(provider: string, messages: any[]) {
 
 // API Proxy for AI providers (handles CORS issues)
 app.post('/api/proxy/:provider', async (c) => {
+  if (c.env.ENABLE_PUBLIC_UPSTREAM_PROXY !== 'true') {
+    return c.json({ error: 'Public upstream proxy is disabled' }, 404)
+  }
+
   const provider = c.req.param('provider')
   const body = await c.req.json()
   const apiKey = c.req.header('X-API-Key')
@@ -231,6 +239,10 @@ app.post('/api/proxy/:provider', async (c) => {
 
 // Search Endpoint (using Google Custom Search or Serper)
 app.post('/api/search', async (c) => {
+  if (c.env.ENABLE_PUBLIC_UPSTREAM_PROXY !== 'true') {
+    return c.json({ error: 'Public upstream proxy is disabled' }, 404)
+  }
+
   const { query } = await c.req.json()
   const apiKey = c.req.header('X-Search-Key')
 
@@ -257,6 +269,10 @@ app.post('/api/search', async (c) => {
 
 // Fetch URL content for analysis
 app.post('/api/fetch-url', async (c) => {
+  if (c.env.ENABLE_PUBLIC_UPSTREAM_PROXY !== 'true') {
+    return c.json({ error: 'Public upstream proxy is disabled' }, 404)
+  }
+
   const { url } = await c.req.json()
 
   // Validate URL to prevent SSRF attacks
@@ -312,6 +328,10 @@ app.post('/api/fetch-url', async (c) => {
 
 // OpenAI GPTs list endpoint
 app.post('/api/gpts/list', async (c) => {
+  if (c.env.ENABLE_PUBLIC_UPSTREAM_PROXY !== 'true') {
+    return c.json({ error: 'Public upstream proxy is disabled' }, 404)
+  }
+
   const apiKey = c.req.header('X-API-Key')
 
   if (!apiKey) {

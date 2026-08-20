@@ -7,15 +7,19 @@
 
   // ==================== Constants ====================
   const STORAGE_KEYS = {
-    API_KEYS: 'aiteam_api_keys',
     CHANNELS: 'aiteam_channels',
     MESSAGES: 'aiteam_messages',
     GPTS: 'aiteam_gpts',
     IMPORTED_CONTENT: 'aiteam_imported',
     CUSTOM_MODELS: 'aiteam_custom_models',
-    CURRENT_CHANNEL: 'aiteam_current_channel',
-    SEARCH_KEY: 'aiteam_search_key'
+    CURRENT_CHANNEL: 'aiteam_current_channel'
   };
+  const LEGACY_SECRET_STORAGE_KEYS = ['aiteam_api_keys', 'aiteam_search_key'];
+
+  function withoutApiKey(model) {
+    const { apiKey, ...safeModel } = model;
+    return safeModel;
+  }
 
   // Complete AI Models - Updated Dec 2025 (Using actual API model IDs)
   const AI_PROVIDERS = {
@@ -181,7 +185,7 @@
   // ==================== Storage Functions ====================
   function loadState() {
     try {
-      const keys = localStorage.getItem(STORAGE_KEYS.API_KEYS);
+      LEGACY_SECRET_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
       const channels = localStorage.getItem(STORAGE_KEYS.CHANNELS);
       const messages = localStorage.getItem(STORAGE_KEYS.MESSAGES);
       const gpts = localStorage.getItem(STORAGE_KEYS.GPTS);
@@ -189,12 +193,21 @@
       const custom = localStorage.getItem(STORAGE_KEYS.CUSTOM_MODELS);
       const channel = localStorage.getItem(STORAGE_KEYS.CURRENT_CHANNEL);
 
-      if (keys) state.apiKeys = JSON.parse(keys);
       if (channels) state.channels = JSON.parse(channels);
       if (messages) state.messages = JSON.parse(messages);
       if (gpts) state.gpts = JSON.parse(gpts);
       if (imported) state.importedContent = JSON.parse(imported);
-      if (custom) state.customModels = JSON.parse(custom);
+      if (custom) {
+        try {
+          state.customModels = JSON.parse(custom).map(withoutApiKey);
+          localStorage.setItem(
+            STORAGE_KEYS.CUSTOM_MODELS,
+            JSON.stringify(state.customModels)
+          );
+        } catch {
+          localStorage.removeItem(STORAGE_KEYS.CUSTOM_MODELS);
+        }
+      }
       if (channel) state.currentChannel = channel;
     } catch (e) {
       console.error('Error loading state:', e);
@@ -203,28 +216,17 @@
 
   function saveState() {
     try {
-      localStorage.setItem(STORAGE_KEYS.API_KEYS, JSON.stringify(state.apiKeys));
       localStorage.setItem(STORAGE_KEYS.CHANNELS, JSON.stringify(state.channels));
       localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(state.messages));
       localStorage.setItem(STORAGE_KEYS.GPTS, JSON.stringify(state.gpts));
       localStorage.setItem(STORAGE_KEYS.IMPORTED_CONTENT, JSON.stringify(state.importedContent));
-      localStorage.setItem(STORAGE_KEYS.CUSTOM_MODELS, JSON.stringify(state.customModels));
+      localStorage.setItem(
+        STORAGE_KEYS.CUSTOM_MODELS,
+        JSON.stringify(state.customModels.map(withoutApiKey))
+      );
       localStorage.setItem(STORAGE_KEYS.CURRENT_CHANNEL, state.currentChannel);
     } catch (e) {
       console.error('Error saving state:', e);
-    }
-  }
-
-  // ==================== Key Encoding (Base64) ====================
-  function encodeKey(key) {
-    return btoa(key);
-  }
-
-  function decodeKey(encrypted) {
-    try {
-      return atob(encrypted);
-    } catch {
-      return encrypted;
     }
   }
 
@@ -848,7 +850,7 @@
   async function callBuiltInModel(ai, userText, userMessage) {
     // Special handling for Search
     if (ai.provider === 'search') {
-      const apiKey = decodeKey(state.apiKeys.searchKey);
+      const apiKey = state.apiKeys.searchKey;
       if (!apiKey) throw new Error('请先配置 Web Search API Key (Serper)');
 
       const response = await fetch('/api/search', {
@@ -871,7 +873,7 @@
     }
 
     const provider = AI_PROVIDERS[ai.provider];
-    const apiKey = decodeKey(state.apiKeys[provider.keyName]);
+    const apiKey = state.apiKeys[provider.keyName];
 
     if (!apiKey) {
       throw new Error(`请先配置 ${provider.name} 的 API Key`);
@@ -1028,7 +1030,7 @@
 
         try {
           const provider = AI_PROVIDERS[currentAI.provider];
-          const apiKey = decodeKey(state.apiKeys[provider.keyName]);
+          const apiKey = state.apiKeys[provider.keyName];
 
           if (!apiKey) continue;
 
@@ -1301,7 +1303,7 @@
 
   // ==================== GPTs Import ====================
   async function importGpts() {
-    const apiKey = decodeKey(state.apiKeys.openaiKey);
+    const apiKey = state.apiKeys.openaiKey;
     if (!apiKey) {
       showToast('请先配置 OpenAI API Key', 'error');
       return;
@@ -1382,13 +1384,13 @@
     Object.values(AI_PROVIDERS).forEach(provider => {
       const input = document.getElementById(provider.keyName);
       if (input && state.apiKeys[provider.keyName]) {
-        input.value = decodeKey(state.apiKeys[provider.keyName]);
+        input.value = state.apiKeys[provider.keyName];
       }
     });
 
     const searchInput = document.getElementById('searchKey');
     if (searchInput && state.apiKeys.searchKey) {
-      searchInput.value = decodeKey(state.apiKeys.searchKey);
+      searchInput.value = state.apiKeys.searchKey;
     }
   }
 
@@ -1396,7 +1398,7 @@
     Object.values(AI_PROVIDERS).forEach(provider => {
       const input = document.getElementById(provider.keyName);
       if (input && input.value.trim()) {
-        state.apiKeys[provider.keyName] = encodeKey(input.value.trim());
+        state.apiKeys[provider.keyName] = input.value.trim();
       } else if (input) {
         delete state.apiKeys[provider.keyName];
       }
@@ -1405,14 +1407,14 @@
     // Save Search Key
     const searchInput = document.getElementById('searchKey');
     if (searchInput && searchInput.value.trim()) {
-      state.apiKeys.searchKey = encodeKey(searchInput.value.trim());
+      state.apiKeys.searchKey = searchInput.value.trim();
     } else if (searchInput) {
       delete state.apiKeys.searchKey;
     }
 
     saveState();
     renderModels();
-    showToast('API Keys 已保存', 'success');
+    showToast('API Keys 仅保留在当前页面内存中', 'success');
   }
 
   // ==================== Export ====================
@@ -1452,7 +1454,7 @@
       messages: state.messages,
       gpts: state.gpts,
       importedContent: state.importedContent,
-      customModels: state.customModels
+      customModels: state.customModels.map(withoutApiKey)
     };
 
     downloadFile(JSON.stringify(data, null, 2), `aiteam-backup-${Date.now()}.json`, 'application/json');
@@ -1472,7 +1474,7 @@
         if (data.messages) state.messages = data.messages;
         if (data.gpts) state.gpts = data.gpts;
         if (data.importedContent) state.importedContent = data.importedContent;
-        if (data.customModels) state.customModels = data.customModels;
+        if (data.customModels) state.customModels = data.customModels.map(withoutApiKey);
 
         saveState();
         renderAll();
@@ -1488,6 +1490,7 @@
     if (!confirm('确定要清除所有本地数据吗？此操作不可恢复！')) return;
 
     Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+    LEGACY_SECRET_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
     location.reload();
   }
 

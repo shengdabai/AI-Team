@@ -5,7 +5,10 @@
   "pages_build_output_dir": "./dist",
   "compatibility_flags": [
     "nodejs_compat"
-  ]
+  ],
+  "vars": {
+    "ENABLE_PUBLIC_UPSTREAM_PROXY": "false"
+  }
   // "vars": {
   //   "MY_VAR": "my-variable"
   // },
