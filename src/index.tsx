@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { validateProxyRequest } from './proxy-validation'
 import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/cloudflare-pages'
 
@@ -96,7 +97,12 @@ app.post('/api/proxy/:provider', async (c) => {
   }
 
   const provider = c.req.param('provider')
-  const body = await c.req.json()
+  let body: any
+  try {
+    const raw = await c.req.text()
+    if (raw.length > 8 * 1024 * 1024) return c.json({ error: 'Request too large' }, 413)
+    body = JSON.parse(raw)
+  } catch { return c.json({ error: 'Invalid JSON request' }, 400) }
   const apiKey = c.req.header('X-API-Key')
   const modelOverride = c.req.header('X-Model')
 
@@ -104,7 +110,9 @@ app.post('/api/proxy/:provider', async (c) => {
     return c.json({ error: 'API Key required' }, 401)
   }
 
-  const model = modelOverride || body.model
+  const checked = validateProxyRequest(body, provider, modelOverride)
+  if (!checked.ok) return c.json({ error: checked.error }, 400)
+  const model = checked.model
 
   const providerConfigs: Record<string, { url: string; headers: Record<string, string> }> = {
     openai: {
@@ -119,7 +127,7 @@ app.post('/api/proxy/:provider', async (c) => {
       }
     },
     gemini: {
-      url: `https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-1.5-pro'}:generateContent?key=${apiKey}`,
+      url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
       headers: {}
     },
     deepseek: {
@@ -156,7 +164,7 @@ app.post('/api/proxy/:provider', async (c) => {
     }
   }
 
-  const config = providerConfigs[provider]
+  const config = Object.hasOwn(providerConfigs, provider) ? providerConfigs[provider] : null
   if (!config) {
     return c.json({ error: 'Unknown provider' }, 400)
   }
@@ -206,6 +214,7 @@ app.post('/api/proxy/:provider', async (c) => {
       body: JSON.stringify(requestBody)
     })
 
+    if (!response.ok) return c.json({ error: 'Upstream provider rejected the request' }, 502)
     const data: any = await response.json()
 
     // Normalize response to OpenAI format
@@ -233,7 +242,7 @@ app.post('/api/proxy/:provider', async (c) => {
 
     return c.json(normalizedResponse)
   } catch (error: any) {
-    return c.json({ error: error.message }, 500)
+    return c.json({ error: 'Upstream provider request failed' }, 502)
   }
 })
 
