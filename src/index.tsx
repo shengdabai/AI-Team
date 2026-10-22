@@ -416,9 +416,9 @@ app.get('/', (c) => {
       .msg-content h1, .msg-content h2, .msg-content h3 { color: #f8fafc; margin: 20px 0 12px; font-weight: 600; }
       .msg-content blockquote { border-left: 4px solid #3b82f6; padding-left: 16px; margin: 16px 0; color: #94a3b8; font-style: italic; }
       .msg-content a { color: #60a5fa; text-decoration: underline; }
-      .msg-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+      .msg-content table { border-collapse: collapse; width: 100%; margin: 16px 0; display: block; overflow-x: auto; }
       .msg-content th, .msg-content td { border: 1px solid #334155; padding: 10px 14px; text-align: left; }
-      .msg-content th { background: #1e293b; color: #f1f5f9; font-weight: 600; }
+      .msg-content th { background: #1e293b; color: #f1f5f9; font-weight: 600; white-space: nowrap; }
       
       .glass-panel { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(71, 85, 105, 0.4); }
       .glass-light { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(71, 85, 105, 0.3); }
@@ -433,7 +433,7 @@ app.get('/', (c) => {
       .channel-item:hover { background: rgba(59, 130, 246, 0.1); }
       .channel-item.active { background: rgba(59, 130, 246, 0.2); border-left: 3px solid #3b82f6; }
       
-      .provider-badge { font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 600; letter-spacing: 0.3px; }
+      .provider-badge { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600; letter-spacing: 0.3px; }
       
       .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 24px; border-radius: 12px; color: white; font-weight: 500; z-index: 9999; animation: slideRight 0.3s ease-out; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
       .toast.success { background: linear-gradient(135deg, #10b981, #059669); }
@@ -450,9 +450,9 @@ app.get('/', (c) => {
     </style>
 </head>
 <body class="text-slate-200 min-h-screen">
-    <div id="app" class="flex h-screen overflow-hidden">
+    <div id="app" class="flex flex-col md:flex-row h-screen overflow-hidden">
         <!-- Sidebar -->
-        <aside class="w-[280px] bg-slate-900/80 backdrop-blur-xl border-r border-slate-700/50 flex flex-col shrink-0">
+        <aside class="w-full md:w-[280px] max-h-[40vh] md:max-h-none bg-slate-900/80 backdrop-blur-xl border-b md:border-b-0 md:border-r border-slate-700/50 flex flex-col shrink-0">
             <!-- Logo -->
             <div class="p-5 border-b border-slate-700/50">
                 <div class="flex items-center gap-3">
@@ -591,7 +591,7 @@ app.get('/', (c) => {
                 </div>
                 
                 <!-- Mentions Dropdown -->
-                <div id="mentionsDropdown" class="hidden absolute bottom-36 left-[300px] glass-panel rounded-xl shadow-2xl max-h-[400px] overflow-y-auto w-[360px] z-50"></div>
+                <div id="mentionsDropdown" class="hidden absolute bottom-36 left-4 md:left-[300px] glass-panel rounded-xl shadow-2xl max-h-[400px] overflow-y-auto w-[calc(100vw-2rem)] md:w-[360px] z-50"></div>
                 
                 <!-- Input -->
                 <div class="flex items-end gap-3">
@@ -655,7 +655,7 @@ app.get('/', (c) => {
                     <div class="p-5 rounded-xl bg-gradient-to-r from-purple-500/15 to-blue-500/15 border border-purple-500/30">
                         <label class="block text-sm font-semibold mb-2 text-white">
                             <i class="fas fa-route text-purple-400 mr-2"></i>OpenRouter API Key
-                            <span class="ml-2 text-[10px] bg-gradient-to-r from-purple-500 to-blue-500 text-white px-2.5 py-1 rounded-full font-bold">推荐 · 100+模型</span>
+                            <span class="ml-2 text-[11px] bg-gradient-to-r from-purple-500 to-blue-500 text-white px-2.5 py-1 rounded-full font-bold">推荐 · 100+模型</span>
                         </label>
                         <input type="password" id="openrouterKey" class="w-full input-field rounded-lg px-4 py-3 text-sm" placeholder="sk-or-v1-..." />
                         <p class="text-xs text-slate-400 mt-2">一个API Key访问OpenAI、Claude、Gemini等100+模型</p>
@@ -664,7 +664,7 @@ app.get('/', (c) => {
                     <div class="p-5 rounded-xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 border border-emerald-500/30">
                         <label class="block text-sm font-semibold mb-2 text-white">
                             <i class="fas fa-search text-emerald-400 mr-2"></i>Web Search API Key (Serper.dev)
-                            <span class="ml-2 text-[10px] bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-2.5 py-1 rounded-full font-bold">联网搜索</span>
+                            <span class="ml-2 text-[11px] bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-2.5 py-1 rounded-full font-bold">联网搜索</span>
                         </label>
                         <input type="password" id="searchKey" class="w-full input-field rounded-lg px-4 py-3 text-sm" placeholder="Search API Key..." />
                         <p class="text-xs text-slate-400 mt-2">注册 Serper.dev 获取免费 Key，支持 @search 联网搜索</p>

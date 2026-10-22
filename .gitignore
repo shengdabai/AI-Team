@@ -35,3 +35,6 @@ pids/
 # Backup
 *.backup
 *.bak
+
+# OMC HUD/session runtime state
+**/.omc/state/

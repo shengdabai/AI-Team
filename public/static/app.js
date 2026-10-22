@@ -290,7 +290,7 @@
               <span class="status-indicator ${statusClass}"></span>
               <i class="${provider.icon.startsWith('fab') ? provider.icon : 'fas ' + provider.icon}" style="color: ${provider.color}"></i>
               <span class="text-sm font-medium">${provider.name}</span>
-              ${!hasKey ? '<span class="text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded ml-1">未配置</span>' : ''}
+              ${!hasKey ? '<span class="text-[11px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded ml-1">未配置</span>' : ''}
             </div>
             <div class="flex items-center gap-1">
               <i class="fas fa-chevron-down text-xs text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}"></i>
@@ -602,7 +602,7 @@
           <div class="px-4 py-2.5 flex items-center gap-2 text-sm font-semibold border-b border-slate-700/50" style="color: ${provider.color}">
             <i class="${provider.icon.startsWith('fab') ? provider.icon : 'fas ' + provider.icon}"></i>
             ${provider.name}
-            ${!hasKey ? '<span class="text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded ml-1">未配置</span>' : ''}
+            ${!hasKey ? '<span class="text-[11px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded ml-1">未配置</span>' : ''}
             <span class="text-xs text-slate-500 font-normal">${displayModels.length} models</span>
           </div>
           <div class="py-1">
