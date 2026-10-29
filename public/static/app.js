@@ -256,7 +256,7 @@
     if (!container) return;
 
     container.innerHTML = state.channels.map(ch => `
-      <div class="channel-item ${ch.id === state.currentChannel ? 'active' : ''}" data-channel="${ch.id}">
+      <div class="channel-item ${ch.id === state.currentChannel ? 'active' : ''}" data-channel="${escapeHtml(ch.id)}">
         <i class="fas fa-hashtag text-slate-500 mr-2"></i>
         <span class="text-sm">${escapeHtml(ch.name)}</span>
       </div>
@@ -341,8 +341,7 @@
         const modelId = el.dataset.model;
         const input = document.getElementById('messageInput');
         if (input) {
-          const shortName = modelId.split('/').pop();
-          input.value += `@${shortName} `;
+          input.value += `@${modelId} `;
           input.focus();
         }
       });
@@ -375,7 +374,7 @@
     }
 
     container.innerHTML = state.gpts.map(gpt => `
-      <div class="flex items-center gap-2 px-2 py-1.5 text-slate-300 cursor-pointer hover:bg-slate-700/30 rounded transition-all" title="${escapeHtml(gpt.description || '')}" data-gpt="${gpt.mention}">
+      <div class="flex items-center gap-2 px-2 py-1.5 text-slate-300 cursor-pointer hover:bg-slate-700/30 rounded transition-all" title="${escapeHtml(gpt.description || '')}" data-gpt="${escapeHtml(gpt.mention)}">
         <span class="status-indicator online"></span>
         <i class="fas fa-magic text-purple-400 text-xs"></i>
         <span class="truncate text-sm">@${escapeHtml(gpt.mention)}</span>
@@ -404,7 +403,7 @@
 
     container.innerHTML = state.importedContent.map((item, idx) => `
       <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-slate-300 group">
-        <div class="flex items-center gap-2 truncate cursor-pointer hover:text-white transition-all" data-content="${item.mention}">
+        <div class="flex items-center gap-2 truncate cursor-pointer hover:text-white transition-all" data-content="${escapeHtml(item.mention)}">
           <i class="fas ${item.source === 'getnote' ? 'fa-sticky-note text-yellow-400' : item.source === 'notebooklm' ? 'fa-book text-blue-400' : 'fa-file text-slate-400'} text-xs"></i>
           <span class="truncate text-sm" title="${escapeHtml(item.name)}">@${escapeHtml(item.mention)}</span>
         </div>
@@ -484,7 +483,7 @@
       if (msg.attachment.type === 'image') {
         attachmentHtml = `
           <div class="mt-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
-            <img src="${msg.attachment.data}" alt="${escapeHtml(msg.attachment.name)}" class="max-h-48 rounded-lg" />
+            <img src="${escapeHtml(msg.attachment.data)}" alt="${escapeHtml(msg.attachment.name)}" class="max-h-48 rounded-lg" />
           </div>
         `;
       } else if (msg.attachment.type === 'url') {
@@ -526,8 +525,8 @@
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-3 mb-1">
-            <span class="font-semibold text-white">${isUser ? 'Tony' : getModelDisplayName(msg.model)}</span>
-            ${!isUser && msg.model ? `<span class="provider-badge" style="background-color: ${providerInfo?.color}20; color: ${providerInfo?.color}">@${msg.model}</span>` : ''}
+            <span class="font-semibold text-white">${isUser ? 'Tony' : escapeHtml(getModelDisplayName(msg.model))}</span>
+            ${!isUser && msg.model ? `<span class="provider-badge" style="background-color: ${providerInfo?.color}20; color: ${providerInfo?.color}">@${escapeHtml(msg.model)}</span>` : ''}
             <span class="text-xs text-slate-500">${formatTime(msg.timestamp)}</span>
           </div>
           <div class="msg-content text-slate-200">${content}</div>
@@ -633,8 +632,8 @@
           </div>
           <div class="py-1">
             ${matchingGpts.map(g => `
-              <div class="mention-item px-4 py-2 flex items-center gap-2 hover:bg-purple-500/10 cursor-pointer transition-all" data-gpt="${g.mention}">
-                <span class="text-white font-medium">@${g.mention}</span>
+              <div class="mention-item px-4 py-2 flex items-center gap-2 hover:bg-purple-500/10 cursor-pointer transition-all" data-gpt="${escapeHtml(g.mention)}">
+                <span class="text-white font-medium">@${escapeHtml(g.mention)}</span>
                 <span class="text-xs text-slate-500">${escapeHtml(g.name)}</span>
               </div>
             `).join('')}
@@ -656,8 +655,8 @@
           </div>
           <div class="py-1">
             ${matchingContent.map(i => `
-              <div class="mention-item px-4 py-2 flex items-center gap-2 hover:bg-amber-500/10 cursor-pointer transition-all" data-content="${i.mention}">
-                <span class="text-white font-medium">@${i.mention}</span>
+              <div class="mention-item px-4 py-2 flex items-center gap-2 hover:bg-amber-500/10 cursor-pointer transition-all" data-content="${escapeHtml(i.mention)}">
+                <span class="text-white font-medium">@${escapeHtml(i.mention)}</span>
                 <span class="text-xs text-slate-500">${escapeHtml(i.name)}</span>
               </div>
             `).join('')}
@@ -679,8 +678,8 @@
           </div>
           <div class="py-1">
             ${matchingCustom.map(m => `
-              <div class="mention-item px-4 py-2 flex items-center gap-2 hover:bg-pink-500/10 cursor-pointer transition-all" data-custom="${m.mention}">
-                <span class="text-white font-medium">@${m.mention}</span>
+              <div class="mention-item px-4 py-2 flex items-center gap-2 hover:bg-pink-500/10 cursor-pointer transition-all" data-custom="${escapeHtml(m.mention)}">
+                <span class="text-white font-medium">@${escapeHtml(m.mention)}</span>
                 <span class="text-xs text-slate-500">${escapeHtml(m.name)}</span>
               </div>
             `).join('')}
@@ -713,7 +712,7 @@
         }
 
         if (model) {
-          insertMention(model.split('/').pop());
+          insertMention(model);
         }
       });
     });
@@ -753,8 +752,8 @@
     }
 
     // Parse mentions
-    const mentionRegex = /@([\w\-\.\/]+)/g;
-    const mentions = [...text.matchAll(mentionRegex)].map(m => m[1]);
+    const mentionRegex = /@([\w\-\.\/]+(?::[\w-]+)?)/g;
+    const mentions = [...new Set([...text.matchAll(mentionRegex)].map(m => m[1]))];
 
     // Find valid AI mentions
     const aiMentions = [];
@@ -800,7 +799,10 @@
     if (!state.messages[state.currentChannel]) {
       state.messages[state.currentChannel] = [];
     }
-    state.messages[state.currentChannel].push(userMessage);
+    // Keep this conversation reference across awaits, even if the user switches
+    // channels. Replacing a cleared history also leaves pending replies detached.
+    const channelMessages = state.messages[state.currentChannel];
+    channelMessages.push(userMessage);
     saveState();
     renderMessages();
 
@@ -815,16 +817,16 @@
 
     // Send to each mentioned AI
     for (const ai of aiMentions) {
-      await callAI(ai, text, userMessage);
+      await callAI(ai, text, userMessage, channelMessages);
     }
 
     // Meeting Mode: Let AIs discuss with each other
     if (state.meetingMode && aiMentions.length >= 2) {
-      await runMeetingMode(aiMentions, text);
+      await runMeetingMode(aiMentions, text, channelMessages);
     }
   }
 
-  async function callAI(ai, userText, userMessage) {
+  async function callAI(ai, userText, userMessage, channelMessages) {
     const modelShortName = ai.model.split('/').pop();
     showTypingIndicator(modelShortName);
 
@@ -832,9 +834,9 @@
       let response;
 
       if (ai.provider === 'custom' && ai.customConfig) {
-        response = await callCustomModel(ai.customConfig, userText, userMessage);
+        response = await callCustomModel(ai.customConfig, userText, userMessage, channelMessages);
       } else {
-        response = await callBuiltInModel(ai, userText, userMessage);
+        response = await callBuiltInModel(ai, userText, userMessage, channelMessages);
       }
 
       const aiMessage = {
@@ -845,7 +847,7 @@
         timestamp: new Date().toISOString()
       };
 
-      state.messages[state.currentChannel].push(aiMessage);
+      channelMessages.push(aiMessage);
       saveState();
 
     } catch (error) {
@@ -859,7 +861,7 @@
         timestamp: new Date().toISOString()
       };
 
-      state.messages[state.currentChannel].push(errorMessage);
+      channelMessages.push(errorMessage);
       saveState();
     }
 
@@ -867,7 +869,7 @@
     renderMessages();
   }
 
-  async function callBuiltInModel(ai, userText, userMessage) {
+  async function callBuiltInModel(ai, userText, userMessage, channelMessages) {
     // Special handling for Search
     if (ai.provider === 'search') {
       const apiKey = state.apiKeys.searchKey;
@@ -899,7 +901,7 @@
       throw new Error(`请先配置 ${provider.name} 的 API Key`);
     }
 
-    const messages = buildMessageHistory(userText, userMessage);
+    const messages = buildMessageHistory(userText, userMessage, channelMessages);
 
     const response = await fetch(`/api/proxy/${ai.provider}`, {
       method: 'POST',
@@ -924,7 +926,7 @@
     return data.choices?.[0]?.message?.content || '无响应内容';
   }
 
-  async function callCustomModel(custom, userText, userMessage) {
+  async function callCustomModel(custom, userText, userMessage, channelMessages) {
     const response = await fetch(custom.endpoint, {
       method: 'POST',
       headers: {
@@ -933,7 +935,7 @@
       },
       body: JSON.stringify({
         model: custom.modelId || 'default',
-        messages: buildMessageHistory(userText, userMessage),
+        messages: buildMessageHistory(userText, userMessage, channelMessages),
         max_tokens: 4096
       })
     });
@@ -944,9 +946,8 @@
     return data.choices?.[0]?.message?.content || '无响应内容';
   }
 
-  function buildMessageHistory(currentText, currentMessage) {
+  function buildMessageHistory(currentText, currentMessage, channelMessages) {
     const messages = [];
-    const channelMessages = state.messages[state.currentChannel] || [];
     // Increase history window
     const recentMessages = channelMessages.slice(-20);
 
@@ -1003,7 +1004,7 @@
   }
 
   // ==================== Meeting Mode (AI Auto-Discussion) ====================
-  async function runMeetingMode(participants, topic) {
+  async function runMeetingMode(participants, topic, channelMessages = state.messages[state.currentChannel] || []) {
     // 系统提示：告知用户会议开始
     const systemMessage = {
       id: Date.now(),
@@ -1012,12 +1013,9 @@
       content: `🎤 **会议模式已启动**\n\n主题: ${topic}\n参与者: ${participants.map(p => p.model.split('/').pop()).join(', ')}\n轮数: ${state.meetingRounds}`,
       timestamp: new Date().toISOString()
     };
-    state.messages[state.currentChannel].push(systemMessage);
+    channelMessages.push(systemMessage);
     saveState();
     renderMessages();
-
-    // 获取当前频道的最新消息作为上下文
-    const channelMessages = state.messages[state.currentChannel] || [];
 
     // 每轮让每个AI回复其他AI的观点
     for (let round = 0; round < state.meetingRounds; round++) {
@@ -1078,7 +1076,7 @@
             content: `**[第${round + 1}轮]** ${content}`,
             timestamp: new Date().toISOString()
           };
-          state.messages[state.currentChannel].push(aiMessage);
+          channelMessages.push(aiMessage);
           saveState();
         } catch (error) {
           console.error(`Meeting mode error for ${modelName}:`, error);
@@ -1100,7 +1098,7 @@
       content: `✅ **会议结束** - 共${state.meetingRounds}轮讨论完成`,
       timestamp: new Date().toISOString()
     };
-    state.messages[state.currentChannel].push(endMessage);
+    channelMessages.push(endMessage);
     saveState();
     renderMessages();
   }
@@ -1133,7 +1131,7 @@
       </div>
       <div class="flex-1">
         <div class="flex items-center gap-3 mb-2">
-          <span class="font-semibold text-white">${getModelDisplayName(model)}</span>
+          <span class="font-semibold text-white">${escapeHtml(getModelDisplayName(model))}</span>
           <span class="text-xs text-slate-500">正在输入...</span>
         </div>
         <div class="flex gap-1.5">
@@ -1588,9 +1586,9 @@
   // ==================== Utilities ====================
   function escapeHtml(text) {
     if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    // This helper is used in text nodes and double-quoted HTML attributes.
+    const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return String(text).replace(/[&<>"']/g, char => entities[char]);
   }
 
   function formatTime(isoString) {
