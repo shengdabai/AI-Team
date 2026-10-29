@@ -2,12 +2,10 @@ import { Hono } from 'hono'
 import { validateProxyRequest } from './proxy-validation'
 import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/cloudflare-pages'
+import { bodyLimit } from 'hono/body-limit'
+import { allowedFetchUrl, readLimitedText, requireProxyAccess, type ProxyBindings } from './proxy-security'
 
-type Bindings = {
-  ENABLE_PUBLIC_UPSTREAM_PROXY?: string
-}
-
-const app = new Hono<{ Bindings: Bindings }>()
+const app = new Hono<{ Bindings: ProxyBindings }>()
 
 // Enable CORS for API routes
 app.use('/api/*', cors({
@@ -20,6 +18,10 @@ app.use('/api/*', cors({
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Search-Key', 'X-Model'],
 }))
+
+app.use('/api/*', requireProxyAccess)
+app.use('/api/*', bodyLimit({ maxSize: 8 * 1024 * 1024,
+  onError: c => c.json({ error: 'Request too large' }, 413) }))
 
 // Serve static files
 app.use('/static/*', serveStatic())
@@ -207,6 +209,8 @@ app.post('/api/proxy/:provider', async (c) => {
 
     const response = await fetch(config.url, {
       method: 'POST',
+      redirect: 'manual',
+      signal: AbortSignal.timeout(30000),
       headers: {
         'Content-Type': 'application/json',
         ...config.headers
@@ -252,7 +256,11 @@ app.post('/api/search', async (c) => {
     return c.json({ error: 'Public upstream proxy is disabled' }, 404)
   }
 
-  const { query } = await c.req.json()
+  let query: unknown
+  try { ({ query } = await c.req.json()) } catch { return c.json({ error: 'Invalid JSON request' }, 400) }
+  if (typeof query !== 'string' || !query.trim() || query.length > 2000) {
+    return c.json({ error: 'query must contain 1–2000 characters' }, 400)
+  }
   const apiKey = c.req.header('X-Search-Key')
 
   if (!apiKey) {
@@ -262,6 +270,8 @@ app.post('/api/search', async (c) => {
   try {
     const response = await fetch('https://google.serper.dev/search', {
       method: 'POST',
+      redirect: 'manual',
+      signal: AbortSignal.timeout(15000),
       headers: {
         'X-API-KEY': apiKey,
         'Content-Type': 'application/json'
@@ -269,10 +279,11 @@ app.post('/api/search', async (c) => {
       body: JSON.stringify({ q: query })
     })
 
+    if (!response.ok) return c.json({ error: 'Search provider rejected the request' }, 502)
     const data = await response.json()
     return c.json(data)
   } catch (error: any) {
-    return c.json({ error: error.message }, 500)
+    return c.json({ error: 'Search provider request failed' }, 502)
   }
 })
 
@@ -282,44 +293,26 @@ app.post('/api/fetch-url', async (c) => {
     return c.json({ error: 'Public upstream proxy is disabled' }, 404)
   }
 
-  const { url } = await c.req.json()
-
-  // Validate URL to prevent SSRF attacks
-  try {
-    const parsed = new URL(url)
-
-    if (parsed.protocol !== 'https:') {
-      return c.json({ error: 'Only HTTPS URLs are allowed' }, 400)
-    }
-
-    const hostname = parsed.hostname.toLowerCase()
-    const privatePatterns = [
-      /^localhost$/,
-      /^127\.\d+\.\d+\.\d+$/,
-      /^10\.\d+\.\d+\.\d+$/,
-      /^192\.168\.\d+\.\d+$/,
-      /^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/,
-      /^169\.254\.\d+\.\d+$/,
-      /^0\.0\.0\.0$/,
-      /^\[::1\]$/,
-      /^\[::ffff:127\./,
-      /^0+$/,
-    ]
-
-    if (privatePatterns.some(pattern => pattern.test(hostname))) {
-      return c.json({ error: 'Access to private/internal addresses is not allowed' }, 403)
-    }
-  } catch {
-    return c.json({ error: 'Invalid URL format' }, 400)
-  }
+  let url: unknown
+  try { ({ url } = await c.req.json()) } catch { return c.json({ error: 'Invalid JSON request' }, 400) }
+  const target = allowedFetchUrl(url, c.env.FETCH_ALLOWED_HOSTS)
+  if (!target) return c.json({ error: 'URL is not an allowed HTTPS destination' }, 403)
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(target.href, {
+      redirect: 'manual',
+      signal: AbortSignal.timeout(15000),
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; AITeamBot/1.0)'
       }
     })
-    const html = await response.text()
+    if (!response.ok) return c.json({ error: 'Page request failed' }, 502)
+    const contentType = response.headers.get('Content-Type') || ''
+    if (!/^(?:text\/html|text\/plain)(?:;|$)/i.test(contentType)) {
+      await response.body?.cancel()
+      return c.json({ error: 'Only HTML or plain text pages are supported' }, 415)
+    }
+    const html = await readLimitedText(response)
 
     const textContent = html
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
@@ -331,7 +324,7 @@ app.post('/api/fetch-url', async (c) => {
 
     return c.json({ content: textContent, url })
   } catch (error: any) {
-    return c.json({ error: error.message }, 500)
+    return c.json({ error: 'Page request failed' }, 502)
   }
 })
 
@@ -349,16 +342,19 @@ app.post('/api/gpts/list', async (c) => {
 
   try {
     const response = await fetch('https://api.openai.com/v1/assistants?limit=100', {
+      redirect: 'manual',
+      signal: AbortSignal.timeout(15000),
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'OpenAI-Beta': 'assistants=v2'
       }
     })
 
+    if (!response.ok) return c.json({ error: 'Assistants provider rejected the request' }, 502)
     const data = await response.json()
     return c.json(data)
   } catch (error: any) {
-    return c.json({ error: error.message }, 500)
+    return c.json({ error: 'Assistants provider request failed' }, 502)
   }
 })
 
@@ -598,7 +594,7 @@ app.get('/', (c) => {
                     <div class="flex gap-1">
                         <label class="w-11 h-11 rounded-xl hover:bg-slate-700/50 flex items-center justify-center text-slate-400 hover:text-blue-400 cursor-pointer transition-all" title="上传文件">
                             <i class="fas fa-paperclip text-lg"></i>
-                            <input type="file" id="fileInput" class="hidden" accept="image/*,.pdf,.txt,.md,.json,.csv" />
+                            <input type="file" id="fileInput" class="hidden" accept="image/png,image/jpeg,image/webp,image/gif,.txt,.md,.json,.csv" />
                         </label>
                         <button id="urlBtn" class="w-11 h-11 rounded-xl hover:bg-slate-700/50 flex items-center justify-center text-slate-400 hover:text-blue-400 transition-all" title="分析网页">
                             <i class="fas fa-link text-lg"></i>

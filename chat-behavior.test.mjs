@@ -6,11 +6,14 @@ import vm from 'node:vm';
 const source = await readFile(new URL('public/static/app.js', import.meta.url), 'utf8');
 
 // Exercise the actual application closure without booting a browser or calling an API.
-function appHarness(fetch) {
+function appHarness(fetch, FileReader) {
   const input = { value: '', style: {}, focus() {} };
+  const toasts = [];
   const context = vm.createContext({
     console: { error() {} },
     fetch,
+    FileReader,
+    toasts,
     setTimeout: callback => callback(),
     localStorage: { setItem() {} },
     document: {
@@ -26,12 +29,76 @@ function appHarness(fetch) {
   const start = source.indexOf('  // Start the app');
   assert.ok(start > 0);
   vm.runInContext(source.slice(0, start) + `
-    showToast = () => {};
+    showToast = message => toasts.push(message);
     globalThis.app = { state, sendMessage, runMeetingMode, renderModels, showMentions,
-      escapeHtml, renderMessage, renderChannels, renderGpts, renderImportedContent, showTypingIndicator };
+      escapeHtml, renderMessage, renderChannels, renderGpts, renderImportedContent, showTypingIndicator,
+      handleFileSelect };
   })();`, context);
-  return { ...context.app, input, document: context.document };
+  return { ...context.app, input, document: context.document, toasts };
 }
+
+test('unsupported imported GPTs fail before saving or sending a chat request', async () => {
+  const app = appHarness(() => { assert.fail('must not call chat completions for an Assistant'); });
+  app.state.gpts = [{ id: 'asst_fixture', mention: 'my-assistant' }];
+  app.state.apiKeys.openaiKey = 'test-only';
+  app.input.value = '@my-assistant question';
+  await app.sendMessage();
+  assert.equal(app.state.messages.general.length, 0);
+  assert.equal(app.input.value, '@my-assistant question');
+  assert.match(app.toasts[0], /GPTs.*暂不支持/);
+});
+
+test('an imported GPT name cannot shadow a configured built-in model', async () => {
+  let calls = 0;
+  const app = appHarness(() => { calls++; return Promise.resolve(response('answer')); });
+  app.state.gpts = [{ id: 'asst_fixture', mention: 'gpt-4o' }];
+  app.state.apiKeys.openaiKey = 'test-only';
+  app.input.value = '@gpt-4o question';
+  await app.sendMessage();
+  assert.equal(calls, 1);
+});
+
+for (const file of [
+  { name: 'paper.pdf', type: 'application/pdf', size: 10 },
+  { name: 'paper.PDF', type: '', size: 10 },
+  { name: 'program.exe', type: 'application/octet-stream', size: 10 },
+  { name: 'large.txt', type: 'text/plain', size: 100001 },
+  { name: 'vector.svg', type: 'image/svg+xml', size: 10 },
+  { name: 'large.png', type: 'image/png', size: 2 * 1024 * 1024 },
+]) {
+  test(`unsupported attachment ${file.name} is rejected before reading`, () => {
+    const app = appHarness(undefined, class { constructor() { assert.fail('must not read rejected files'); } });
+    app.handleFileSelect({ target: { files: [file] } });
+    assert.equal(app.state.currentAttachment, null);
+    assert.equal(app.toasts.length, 1);
+  });
+}
+
+test('text attachment is read as text and a read error preserves the previous attachment', () => {
+  let reader;
+  const app = appHarness(undefined, class {
+    constructor() { reader = this; }
+    readAsText(file) { assert.equal(file.name, 'notes.md'); }
+  });
+  app.handleFileSelect({ target: { files: [{ name: 'notes.md', type: '', size: 10 }] } });
+  reader.onload({ target: { result: 'fixture text' } });
+  assert.equal(app.state.currentAttachment.content, 'fixture text');
+  reader.onerror();
+  assert.equal(app.state.currentAttachment.content, 'fixture text');
+  assert.match(app.toasts[0], /读取失败/);
+});
+
+test('supported images are read as data URLs for multimodal chat', () => {
+  let reader;
+  const app = appHarness(undefined, class {
+    constructor() { reader = this; }
+    readAsDataURL(file) { assert.equal(file.name, 'photo.png'); }
+  });
+  app.handleFileSelect({ target: { files: [{ name: 'photo.png', type: 'image/png', size: 10 }] } });
+  reader.onload({ target: { result: 'data:image/png;base64,AAAA' } });
+  assert.equal(app.state.currentAttachment.type, 'image');
+  assert.equal(app.state.currentAttachment.data, 'data:image/png;base64,AAAA');
+});
 
 const response = text => ({ json: async () => ({ choices: [{ message: { content: text } }] }) });
 

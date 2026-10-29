@@ -22,7 +22,7 @@
 - 支持20+主流AI模型
 
 ### 📎 文件/图片上传分析 (Priority 1)
-- 支持图片、PDF、文本、Markdown、JSON、CSV等格式
+- 支持 PNG/JPEG/WebP/GIF 图片（最多 1.5 MiB）与文本、Markdown、JSON、CSV（最多 100000 字节）；暂不支持 PDF
 - 上传后自动作为上下文发送给AI
 
 ### 🔗 网页链接分析 (Priority 1)
@@ -31,7 +31,7 @@
 
 ### 🪄 GPTs 导入 (Priority 2)
 - 一键导入 OpenAI Assistants
-- 导入后可通过 @ 直接调用
+- 目前仅导入列表，尚未实现 Assistants 对话；提及时会保留输入并提示选择普通模型
 
 ### 📚 内容导入 (Priority 2)
 - 支持 Get笔记、NotebookLM 内容导入
@@ -139,6 +139,34 @@
 - **部署**: Cloudflare Pages
 - **存储**: LocalStorage (客户端)
 
+### 代理安全与本地验证
+
+代理默认关闭，填写模型 API Key 不会启用代理。启用前需要配置 `ACCESS_TEAM_DOMAIN`
+（`https://<team>.cloudflareaccess.com`）、`ACCESS_AUD`，以及具有 `limit({ key })`
+方法、返回 `{ success: boolean }` 的 `PROXY_RATE_LIMITER` 绑定。每个请求验证 Access
+的 RS256 签名、issuer、audience、过期时间、签发时间和 subject，再按已验证身份限流。
+配置缺失、身份无效或限流故障均拒绝转发；Access 策略决定哪些用户可以访问此应用。
+页面与 `/api/*` 必须位于同一个受 Access 保护的应用内，由 Access 注入签名请求头。
+
+当前 Pages 配置未提供上述绑定，不能据本地测试认定线上可用。锁文件中的 Wrangler
+不支持在 Pages 配置中直接声明 `ratelimits`；Pages 需通过支持 `limit` 方法的 RPC
+服务绑定接入限流器，或另行规划 Workers 部署。`src/limiter-worker.ts` 提供独立 Worker
+入口；它需要原生 `PROXY_REQUESTS` 限流绑定，Pages 的 `PROXY_RATE_LIMITER` 服务绑定
+指向这个 Worker。仓库没有新增部署配置，未创建或启用任何服务。绑定、Access 策略和阈值需要在
+目标环境验收。Cloudflare 原生限流按区域近似计数，不能用作严格的全球费用上限。
+
+网页抓取还要求 `FETCH_ALLOWED_HOSTS`（逗号分隔的精确域名，无通配符）。只配置运营方
+信任且控制 DNS 的公开域名；此名单不代替 DNS 层的出站控制。抓取仅允许 HTTPS、禁止
+重定向与 URL 凭据，仅接受 HTML/纯文本，响应最多 1 MiB。所有上游请求均设置超时并
+拒绝重定向。API Key 只保留在页面内存，关闭页面后需重新输入。
+
+使用 Node.js 24 运行 `npm test`。测试在内存中打包真实路由，使用本地生成的临时签名密钥、
+模拟限流器和模拟 fetch；不读取账号凭据、不联系真实模型服务。构建使用 `npm run build`。
+此测试不替代 Access 登录、真实绑定、浏览器交互及真实上游的验收。
+
+参考：[Access JWT 校验](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/)、
+[Workers 限流绑定及准确性](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)。
+
 ## 📁 项目结构
 
 ```
@@ -159,7 +187,7 @@ AI-Team/
 
 ```bash
 # 安装依赖
-npm install
+npm ci
 
 # 构建
 npm run build
@@ -229,7 +257,7 @@ MIT License
 - Support for 20+ mainstream AI models
 
 ### 📎 File/Image Upload Analysis (Priority 1)
-- Support for images, PDFs, text, Markdown, JSON, CSV formats
+- PNG/JPEG/WebP/GIF images (up to 1.5 MiB) and text/Markdown/JSON/CSV (up to 100000 bytes); PDF is not supported
 - Automatically uploaded content is sent to AI as context
 
 ### 🔗 Web Page Link Analysis (Priority 1)
@@ -238,7 +266,7 @@ MIT License
 
 ### 🪄 GPTs Import (Priority 2)
 - One-click import of OpenAI Assistants
-- Import and call directly via @ after import
+- List import only; Assistants conversations are not implemented. Mentions preserve the input and ask the user to select a regular model
 
 ### 📚 Content Import (Priority 2)
 - Support importing content from GetNote and NotebookLM
@@ -346,6 +374,12 @@ One API Key to access all mainstream models:
 - **Deployment**: Cloudflare Pages
 - **Storage**: LocalStorage (client-side)
 
+Outbound APIs remain disabled by default. Enabling requires verified Cloudflare Access JWTs and a
+`PROXY_RATE_LIMITER` binding exposing `limit({ key })`; missing controls fail closed. Pages requires
+an RPC service adapter rather than a native `ratelimits` declaration with the locked Wrangler version.
+URL fetching requires exact trusted domains in `FETCH_ALLOWED_HOSTS`, rejects redirects, and caps
+HTML/text responses at 1 MiB. See the Chinese security section above for configuration and test limits.
+
 ## 📁 Project Structure
 
 ```
@@ -366,7 +400,7 @@ AI-Team/
 
 ```bash
 # Install dependencies
-npm install
+npm ci
 
 # Build
 npm run build

@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "node --test wave0-security.test.mjs chat-behavior.test.mjs",
+    "test": "node --test wave0-security.test.mjs chat-behavior.test.mjs proxy-security.test.mjs",
     "build": "vite build",
     "preview": "wrangler pages dev",
     "deploy": "npm run build && wrangler pages deploy",

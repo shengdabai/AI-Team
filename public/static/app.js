@@ -757,6 +757,7 @@
 
     // Find valid AI mentions
     const aiMentions = [];
+    let hasUnsupportedGpt = false;
     mentions.forEach(m => {
       for (const [providerKey, provider] of Object.entries(AI_PROVIDERS)) {
         const model = provider.models.find(mod =>
@@ -770,9 +771,8 @@
         }
       }
 
-      // Check GPTs
-      if (state.gpts.find(g => g.mention === m)) {
-        aiMentions.push({ model: m, provider: 'openai', isGpt: true });
+      if (state.gpts.some(g => g.mention === m)) {
+        hasUnsupportedGpt = true;
         return;
       }
 
@@ -782,6 +782,11 @@
         aiMentions.push({ model: m, provider: 'custom', customConfig: custom });
       }
     });
+
+    if (hasUnsupportedGpt) {
+      showToast('导入的 GPTs 暂不支持对话，请选择普通模型。输入和附件已保留。', 'error');
+      return;
+    }
 
     // Find context mentions
     const contextMentions = mentions.filter(m => state.importedContent.find(i => i.mention === m));
@@ -1155,9 +1160,21 @@
     const file = event.target.files?.[0];
     if (!file) return;
 
+    const isImage = /^image\/(png|jpeg|webp|gif)$/.test(file.type);
+    const isText = !/\.pdf$/i.test(file.name) && file.type !== 'application/pdf' &&
+      (file.type.startsWith('text/') || /\.(txt|md|json|csv)$/i.test(file.name));
+    if (!isImage && !isText) {
+      showToast('暂不支持此文件格式（包括 PDF）。请使用文本、Markdown、JSON、CSV 或 PNG/JPEG/WebP/GIF 图片。', 'error');
+      return;
+    }
+    if (file.size > (isImage ? 1.5 * 1024 * 1024 : 100000)) {
+      showToast(isImage ? '图片不能超过 1.5 MiB' : '文本文件不能超过 100000 字节', 'error');
+      return;
+    }
     const reader = new FileReader();
+    reader.onerror = () => showToast('文件读取失败，请重新选择文件。', 'error');
 
-    if (file.type.startsWith('image/')) {
+    if (isImage) {
       reader.onload = (e) => {
         state.currentAttachment = {
           type: 'image',
