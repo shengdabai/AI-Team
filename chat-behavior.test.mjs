@@ -30,7 +30,7 @@ function appHarness(fetch, FileReader) {
   assert.ok(start > 0);
   vm.runInContext(source.slice(0, start) + `
     showToast = message => toasts.push(message);
-    globalThis.app = { state, sendMessage, runMeetingMode, renderModels, showMentions,
+    globalThis.app = { state, AI_PROVIDERS, sendMessage, runMeetingMode, renderModels, showMentions,
       escapeHtml, renderMessage, renderChannels, renderGpts, renderImportedContent, showTypingIndicator,
       handleFileSelect };
   })();`, context);
@@ -176,11 +176,14 @@ test('a full OpenRouter ID including :free reaches the selected provider intact'
     return response('answer');
   });
   app.state.apiKeys.openrouterKey = 'test-only';
-  app.input.value = '@google/gemini-2.0-flash-exp:free question';
+  // The built-in list no longer ships a ":free" model (main renamed it), so add a fixture entry
+  // to keep exercising the ":suffix" part of the mention parser.
+  app.AI_PROVIDERS.openrouter.models.push({ id: 'vendor/fixture-model:free', name: 'Fixture' });
+  app.input.value = '@vendor/fixture-model:free question';
   await app.sendMessage();
   assert.equal(requests.length, 1);
   assert.equal(requests[0].url, '/api/proxy/openrouter');
-  assert.equal(requests[0].body.model, 'google/gemini-2.0-flash-exp:free');
+  assert.equal(requests[0].body.model, 'vendor/fixture-model:free');
 });
 
 test('repeating a model mention makes only one request', async () => {

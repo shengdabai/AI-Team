@@ -1,143 +1,212 @@
+# AI-Team
+
+Multi-model AI orchestration playground: @-mention GPT-4o, Claude, Gemini, Grok, DeepSeek and 5 Chinese models, compare or let them debate.
+
+## Business Context
+
+- **Category:** AI workflow infrastructure
+- **Audience:** AI builders, creators, independent developers, and small teams that want repeatable local AI workflows.
+- **Repository status:** Public repository. Keep examples, docs, and issues free of credentials, private data, and machine-specific paths.
+- **Topics:** ai, chatbot, cloudflare-workers, deepseek, gemini, hono, llm, multi-model, openrouter, orchestration
+
+## What This Project Is For
+
+- Multi-model AI orchestration playground: @-mention GPT-4o, Claude, Gemini, Grok, DeepSeek and 5 Chinese models, compare or let them debate.
+- Package repeatable AI workflows into reusable local assets.
+- Reduce one-off prompt work with versioned skills, guardrails, and handoff files.
+
+## Where It Fits
+
+This repository is part of a broader AI local-workbench operating model: reusable skills, local automation, auditable configuration, and repeatable delivery workflows.
+
+## Technical Overview
+
+- **Primary language:** JavaScript
+- **Detected stack:** JavaScript, Node.js, Vite
+- **Default branch:** `main`
+- **Visibility:** `PUBLIC`
+- **License:** MIT License
+
+## Repository Map
+
+- `src`
+- `public`
+- `LICENSE`
+- `README.md`
+- `SECURITY.md`
+- `ecosystem.config.cjs`
+- `package-lock.json`
+- `package.json`
+- `tsconfig.json`
+- `vite.config.ts`
+- `wrangler.jsonc`
+
+## 🤝 Supported Models
+
+Ten providers are wired into the proxy and the model picker — use any `@`-name below:
+
+| Provider | Example `@`-names |
+|----------|-------------------|
+| **OpenAI** | `@gpt-4o` · `@gpt-4.1` · `@gpt-4o-mini` |
+| **Anthropic Claude** | `@claude-3-5-sonnet-20241022` · `@claude-3-opus-20240229` · `@claude-3-5-haiku-20241022` |
+| **Google Gemini** | `@gemini-2.0-flash` · `@gemini-1.5-pro` · `@gemini-1.5-flash` |
+| **xAI Grok** | `@grok-2-1212` · `@grok-vision-beta` |
+| **DeepSeek** | `@deepseek-chat` (V3) · `@deepseek-reasoner` (R1) · `@deepseek-coder` |
+| **OpenRouter** | `@deepseek/deepseek-chat` · `@qwen/qwen-2.5-72b-instruct` (100+ models, one key) |
+| **Doubao 豆包** | `@doubao-2.0-pro` · `@doubao-1.5-pro-256k` |
+| **Qwen 通义千问** | `@qwen-2.5-max` · `@qwen-coder-plus` |
+| **Kimi Moonshot** | `@moonshot-v2-auto` · `@moonshot-v1-128k` |
+| **Zhipu GLM 智谱** | `@glm-5-plus` · `@glm-4-flash` |
+
+You can also add **any OpenAI-compatible API** as a custom model from Settings.
+
+## 🧱 Tech Stack
+
+- **Backend / edge proxy:** [Hono](https://hono.dev) on Cloudflare Workers (handles CORS, normalizes provider responses)
+- **Frontend:** Vanilla JavaScript + TailwindCSS (CDN), `marked` + `DOMPurify` + `highlight.js`
+- **Hosting:** Cloudflare Pages
+- **Storage:** browser LocalStorage for history; API keys stay in page memory only and must be re-entered after the page is closed
+- **Build:** Vite + Wrangler
+
+Outbound APIs remain disabled by default. Enabling requires verified Cloudflare Access JWTs and a
+`PROXY_RATE_LIMITER` binding exposing `limit({ key })`; missing controls fail closed. Pages requires
+an RPC service adapter rather than a native `ratelimits` declaration with the locked Wrangler version.
+URL fetching requires exact trusted domains in `FETCH_ALLOWED_HOSTS`, rejects redirects, and caps
+HTML/text responses at 1 MiB. See the Chinese security section below for configuration and test limits.
+
+## 🚀 Quick Start
+
+```bash
+npm ci
+npm run dev
+npm run preview
+
+# Deploy to your own Cloudflare Pages
+npm run deploy
+```
+
+No `.env` file is needed for the app itself — API keys are entered in the in-app **Settings ⚙️** panel and kept in page memory only. Example placeholders:
+
+```
+OpenRouter key:  sk-or-v1-YOUR_KEY_HERE   (recommended — one key for 100+ models)
+OpenAI key:      sk-YOUR_KEY_HERE
+Serper key:      YOUR_SERPER_KEY_HERE      (for @search)
+```
+
+| Command | Purpose |
+|---|---|
+| `npm ci` | Install the locked dependencies. |
+| `npm test` | Security and chat-behaviour tests (Node.js 24). |
+| `npm run dev` | vite |
+| `npm run preview` | wrangler pages dev |
+| `npm run build` | vite build |
+
+## 📖 Usage
+
+```text
+# Single model
+@gpt-4o Explain transformers like I'm five.
+
+# Compare models in one shot
+@claude-3-5-sonnet-20241022 @gemini-1.5-pro Compare: impact of AI on education.
+
+# Meeting Mode (toggle the 👥 button, then mention 2+ models)
+@gpt-4o @deepseek-chat Debate: is remote work better for engineering teams?
+
+# Web search grounded answer
+@search latest news on open-weight LLMs
+```
+
+Click **📎** to attach a file, **🔗** to analyze a URL, and **export** to save the channel as Markdown.
+
+## 🗺️ Status
+
+Actively developed and live at https://ai-team.pages.dev. Current focus: more providers, richer Meeting Mode orchestration, and streaming responses. Issues and PRs welcome.
+
+## 🤝 Connect / About
+
+Built in public by **Tony (Sheng)** — a Chinese-language teacher (6,000+ students) building AI + Chinese-teaching tools.
+
+If AI Team Hub is useful to you, please **⭐ Star this repo** and **[Follow @shengdabai](https://github.com/shengdabai)** to see what ships next.
+
+More tools in the same ecosystem:
+- [everything-claude-code](https://github.com/shengdabai/everything-claude-code)
+- [content-creator-hub](https://github.com/shengdabai/content-creator-hub)
+- [ai-innovative-app-design](https://github.com/shengdabai/ai-innovative-app-design)
+
+## 📄 License
+
+Released under the MIT License.
+
+---
+
+<a name="中文"></a>
+
 # AI Team Hub 🤖
 
-[![GPT-4o](https://img.shields.io/badge/GPT-4o-10a37f?style=flat-square&logo=openai&logoColor=white)](https://openai.com)
-[![Claude 3.5](https://img.shields.io/badge/Claude-3.5%20Sonnet-d97850?style=flat-square)](https://anthropic.com)
-[![Gemini 2.0](https://img.shields.io/badge/Gemini-2.0%20Flash-4285f4?style=flat-square&logo=google&logoColor=white)](https://ai.google)
-[![Grok 3](https://img.shields.io/badge/Grok-3-ffffff?style=flat-square&logo=x&logoColor=black)](https://x.ai)
-[![DeepSeek V3](https://img.shields.io/badge/DeepSeek-V3-00b4d8?style=flat-square)](https://deepseek.com)
+**[English](#ai-team-hub-) | 中文**
 
-**智能多模型AI协作平台** - 在一个类Slack界面中通过 @ 提及不同AI模型，组建你的AI团队解决复杂问题。
+[![Last commit](https://img.shields.io/github/last-commit/shengdabai/AI-Team?style=flat-square)](https://github.com/shengdabai/AI-Team/commits)
+[![Stars](https://img.shields.io/github/stars/shengdabai/AI-Team?style=social)](https://github.com/shengdabai/AI-Team/stargazers)
+[![Follow @shengdabai](https://img.shields.io/github/followers/shengdabai?style=social)](https://github.com/shengdabai)
 
-## 🌐 在线访问
+> **一个对话框,十家 AI 厂商。`@` 提及任意模型——或一次 @ 多个——看它们互相辩论。**
 
-**生产环境**: https://ai-team.pages.dev
+**AI Team Hub** 是一个类 Slack 界面的多模型编排试验场。输入 `@` 即可召唤 GPT-4o、Claude、Gemini、Grok、DeepSeek 以及一众国产大模型,并排对比它们的回答;或者打开 **会议模式**,让两个以上模型围绕同一话题连续讨论数轮。密钥存在你自己的浏览器里,无后端数据库,基于 Cloudflare Workers 跑在边缘节点。
 
-**GitHub 仓库**: https://github.com/shengdabai/AI-Team
+🌐 **在线体验:** https://ai-team.pages.dev
+
+---
+
+## 为什么做它
+
+为了对比答案在五个 AI 产品之间反复切标签页,太累。大多数所谓"多模型"工具又把你锁死在某一家厂商的路由上。AI Team Hub 把所有主流厂商统一到一套 `@` 提及语法之下,把 API 密钥留在 **你的** 浏览器里(永不上服务器),还加了单一聊天应用都没有的一招:让模型之间 **互相对话**。
+
+## 它是什么
+
+一个单页 Web 应用,它会:
+- 通过一层轻量的 Cloudflare 代理,把你的消息分发给一个或多个 AI 厂商(解决 CORS,绝不存储密钥);
+- 把每家厂商各异的返回格式统一成一致的聊天视图;
+- 在会议模式下,编排你 @ 到的几个模型进行多轮讨论。
 
 ## ✨ 核心功能
 
-### 🎯 多模型对话 (Priority 1)
-- 输入 `@` 选择AI模型，支持二级菜单选择具体版本
-- 支持同时 @ 多个模型对比回答
-- 支持20+主流AI模型
+- **🎯 多模型 `@` 提及** — 输入 `@` 弹出二级模型选择器;一条消息里 @ 多个模型即可瞬间对比答案。
+- **🧑‍🤝‍🧑 会议模式** — @ 两个以上模型,它们围绕你的话题自动讨论可配置轮数,最后给出总结。
+- **📎 文件 / 图片分析** — 支持 PNG/JPEG/WebP/GIF 图片（最多 1.5 MiB）与文本、Markdown、JSON、CSV（最多 100000 字节）作为上下文；暂不支持 PDF。
+- **🔗 网页链接分析** — 粘贴网址,自动抓取并清洗为纯文本上下文(带 SSRF 防护)。
+- **🔍 联网搜索** — 通过 Serper.dev 的 `@search`,获取实时、有据可依的回答。
+- **🪄 GPTs 导入** — 目前仅导入 OpenAI Assistants 列表，尚未实现 Assistants 对话；提及时会保留输入并提示选择普通模型。
+- **📚 内容导入** — 把 GetNote / NotebookLM 的笔记作为可复用上下文引入。
+- **💾 本地历史 + Markdown 导出** — 对话自动存浏览器;任意频道一键导出 Markdown。
+- **⚙️ 自定义模型** — 添加任何 OpenAI 兼容端点,自定义模型 ID 和密钥。
 
-### 📎 文件/图片上传分析 (Priority 1)
-- 支持 PNG/JPEG/WebP/GIF 图片（最多 1.5 MiB）与文本、Markdown、JSON、CSV（最多 100000 字节）；暂不支持 PDF
-- 上传后自动作为上下文发送给AI
+## 🤝 支持的模型
 
-### 🔗 网页链接分析 (Priority 1)
-- 输入URL自动提取网页内容
-- 作为上下文供AI分析
+十家厂商已接入代理与模型选择器——下面任意 `@` 名称均可使用:
 
-### 🪄 GPTs 导入 (Priority 2)
-- 一键导入 OpenAI Assistants
-- 目前仅导入列表，尚未实现 Assistants 对话；提及时会保留输入并提示选择普通模型
+| 厂商 | 示例 `@` 名称 |
+|------|---------------|
+| **OpenAI** | `@gpt-4o` · `@gpt-4.1` · `@gpt-4o-mini` |
+| **Anthropic Claude** | `@claude-3-5-sonnet-20241022` · `@claude-3-opus-20240229` · `@claude-3-5-haiku-20241022` |
+| **Google Gemini** | `@gemini-2.0-flash` · `@gemini-1.5-pro` · `@gemini-1.5-flash` |
+| **xAI Grok** | `@grok-2-1212` · `@grok-vision-beta` |
+| **DeepSeek** | `@deepseek-chat` (V3) · `@deepseek-reasoner` (R1) · `@deepseek-coder` |
+| **OpenRouter** | `@deepseek/deepseek-chat` · `@qwen/qwen-2.5-72b-instruct`(一个 key,100+ 模型) |
+| **豆包 Doubao** | `@doubao-2.0-pro` · `@doubao-1.5-pro-256k` |
+| **通义千问 Qwen** | `@qwen-2.5-max` · `@qwen-coder-plus` |
+| **Kimi Moonshot** | `@moonshot-v2-auto` · `@moonshot-v1-128k` |
+| **智谱 GLM** | `@glm-5-plus` · `@glm-4-flash` |
 
-### 📚 内容导入 (Priority 2)
-- 支持 Get笔记、NotebookLM 内容导入
-- 导入后可作为上下文引用
+你也可以在设置里添加 **任何 OpenAI 兼容 API** 作为自定义模型。
 
-### 💾 对话历史 + 导出 (Priority 3)
-- 本地自动保存对话
-- 一键导出 Markdown 格式
+## 🧱 技术栈
 
-### ⚙️ 自定义模型 (Priority 4)
-- 添加任何 OpenAI 兼容 API
-- 自定义端点、模型ID、API Key
-
-## 🤖 支持的AI模型 (使用实际API模型ID)
-
-### OpenAI
-| 模型 | @ 名称 | 说明 |
-|------|--------|------|
-| GPT-4.1 | `@gpt-4.1` | 最新旗舰 (2025) |
-| GPT-4.1 Mini | `@gpt-4.1-mini` | 轻量版 |
-| GPT-4o | `@gpt-4o` | 稳定版 |
-| GPT-4o Mini | `@gpt-4o-mini` | 快速经济版 |
-| o1 | `@o1` | 推理模型 |
-| o1-mini | `@o1-mini` | 轻量推理 |
-| o3-mini | `@o3-mini` | 最新推理 (NEW) |
-
-### Anthropic Claude
-| 模型 | @ 名称 | 说明 |
-|------|--------|------|
-| Claude 3.5 Sonnet v2 | `@claude-3-5-sonnet-20250618` | 最新旗舰 (2025) |
-| Claude 3.5 Sonnet | `@claude-3-5-sonnet-20241022` | 稳定版 |
-| Claude 3.5 Haiku | `@claude-3-5-haiku-20241022` | 快速响应 |
-| Claude 3 Opus | `@claude-3-opus-20240229` | 最强能力 |
-
-### Google Gemini
-| 模型 | @ 名称 | 说明 |
-|------|--------|------|
-| Gemini 2.0 Flash Exp | `@gemini-2.0-flash-exp` | 最新实验版 |
-| Gemini 2.0 Flash Thinking | `@gemini-2.0-flash-thinking-exp` | 推理版 |
-| Gemini 1.5 Pro | `@gemini-1.5-pro` | 长上下文 (稳定) |
-| Gemini 1.5 Flash | `@gemini-1.5-flash` | 快速响应 |
-| Gemini 1.5 Flash 8B | `@gemini-1.5-flash-8b` | 经济版 |
-
-### xAI Grok
-| 模型 | @ 名称 | 说明 |
-|------|--------|------|
-| Grok 2 | `@grok-2-1212` | 稳定版 |
-| Grok Vision | `@grok-vision-beta` | 视觉理解 |
-| Grok Beta | `@grok-beta` | 基础版 |
-
-### DeepSeek
-| 模型 | @ 名称 | 说明 |
-|------|--------|------|
-| DeepSeek V3 | `@deepseek-chat` | 最新版本 |
-| DeepSeek R1 | `@deepseek-reasoner` | 推理模型 |
-| DeepSeek Coder | `@deepseek-coder` | 代码专家 |
-
-### OpenRouter (推荐 - 100+模型)
-一个API Key访问所有主流模型：
-- `@openai/gpt-4o` `@openai/o1-mini` `@anthropic/claude-3.5-sonnet`
-- `@google/gemini-2.0-flash-exp:free` `@deepseek/deepseek-chat` `@deepseek/deepseek-r1`
-- `@meta-llama/llama-3.3-70b-instruct` `@mistralai/mistral-large-2411`
-
-### 中国模型
-| 平台 | 模型 | @ 名称 |
-|------|------|--------|
-| 豆包 | 2.0 Pro | `@doubao-2.0-pro` |
-| 豆包 | 1.5 Pro 256K | `@doubao-1.5-pro-256k` |
-| 通义千问 | Qwen 2.5 Max | `@qwen-2.5-max` |
-| 通义千问 | Qwen Max | `@qwen-max-latest` |
-| Kimi | Moonshot V2 Auto | `@moonshot-v2-auto` |
-| 智谱 | GLM-5 Plus | `@glm-5-plus` |
-
-## 🚀 快速开始
-
-### 1. 配置 API Key
-1. 打开设置 ⚙️
-2. 输入 API Key（推荐使用 OpenRouter，一个Key访问100+模型）
-3. 保存
-
-### 2. 开始对话
-```
-@gpt-4o 你好，介绍一下你自己
-```
-
-### 3. 多模型协作
-```
-@claude-3-5-sonnet-20241022 @gemini-2.0-flash 对比分析：人工智能对教育的影响
-```
-
-### 4. 上传文件分析
-1. 点击 📎 上传文件
-2. 输入问题，选择模型
-3. 发送
-
-### 5. 网页链接分析
-1. 点击 🔗
-2. 输入网页URL
-3. 获取内容后提问
-
-## 🛠️ 技术架构
-
-- **前端**: TailwindCSS + Vanilla JS
-- **后端**: Hono (Cloudflare Workers)
-- **部署**: Cloudflare Pages
-- **存储**: LocalStorage (客户端)
+- **后端 / 边缘代理:** Cloudflare Workers 上的 [Hono](https://hono.dev)(处理 CORS,统一厂商返回)
+- **前端:** 原生 JavaScript + TailwindCSS(CDN),`marked` + `DOMPurify` + `highlight.js`
+- **托管:** Cloudflare Pages
+- **存储:** 浏览器 LocalStorage 保存历史;API Key 只保留在页面内存,关闭页面后需重新输入
+- **构建:** Vite + Wrangler
 
 ### 代理安全与本地验证
 
@@ -167,289 +236,48 @@
 参考：[Access JWT 校验](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/)、
 [Workers 限流绑定及准确性](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)。
 
-## 📁 项目结构
-
-```
-AI-Team/
-├── src/
-│   └── index.tsx         # Hono 后端 + HTML
-├── public/
-│   └── static/
-│       └── app.js        # 前端应用逻辑
-├── dist/                  # 构建输出
-├── ecosystem.config.cjs   # PM2 配置
-├── wrangler.jsonc        # Cloudflare 配置
-├── vite.config.ts        # Vite 构建配置
-└── package.json
-```
-
-## 💻 本地开发
+## 🚀 快速开始
 
 ```bash
-# 安装依赖
+# 1. 克隆
+git clone https://github.com/shengdabai/AI-Team.git
+cd AI-Team
+
+# 2. 安装依赖
 npm ci
 
-# 构建
+# 3. 本地构建 + 运行(Cloudflare Pages 开发服务器)
 npm run build
-
-# 本地开发
 npm run preview
 
-# 部署
+# 4. 部署到你自己的 Cloudflare Pages
 npm run deploy
 ```
 
-## 📝 更新日志
-
-### v3.2 (2025-12-27)
-- ✨ 更新至最新AI模型 (2025年12月)
-- 📊 OpenAI: 新增 GPT-4.1, o3-mini
-- 📊 Claude: 更新至 Claude 3.5 Sonnet v2 (20250618)
-- 📊 Gemini: 新增 Gemini 2.0 Flash Exp, Flash Thinking Exp
-- 🔧 优化推理模型 max_tokens 参数处理
-- 🐛 修复多个API提供商的模型配置
-
-### v3.1 (2025-12-26)
-- 🔧 更新所有模型ID为实际API支持的格式
-- 🐛 修复 max_tokens 参数问题 (推理模型使用 max_completion_tokens)
-- 📊 OpenAI: gpt-4o, o1, o1-mini 等
-- 📊 Gemini: gemini-2.0-flash, gemini-1.5-pro 等
-- 📊 Claude: claude-3-5-sonnet-20241022, claude-3-opus-20240229 等
-
-### v3.0 (2025-12-26)
-- 🎨 全新商务专业界面设计
-- 🐛 修复消息发送功能
-- 🔧 修复JavaScript CDN库冲突
-- 📱 优化响应式布局
-
-### v2.0 (2025-12-26)
-- ✨ 添加 OpenRouter 支持 (100+模型)
-- 📋 模型选择器升级为二级菜单
-
-### v1.0 (2025-12-26)
-- 🚀 初始版本发布
-- 💬 Slack风格多模型对话
-- 📎 文件/图片上传
-- 🔗 网页链接分析
-- 💾 对话历史本地保存
-
-## 📄 License
-
-MIT License
-
 ---
 
-# AI Team Hub 🤖
+## Operating Notes
 
-**Intelligent Multi-Model AI Collaboration Platform** - In a Slack-like interface, mention different AI models with @ to form your AI team and solve complex problems.
+- Keep real credentials out of the repository. Use local environment files, GitHub repository secrets, or the deployment platform secret manager.
+- If a `.env.example` file exists, treat it as documentation only; never commit filled-in `.env` files.
+- Before publishing screenshots, demos, or client examples, remove private names, internal paths, account IDs, and API endpoints.
+- The `Repository Hygiene` workflow is a lightweight guardrail, not a replacement for product-specific tests.
 
-## 🌐 Online Access
+## Delivery Checklist
 
-**Production**: https://ai-team.pages.dev
+- [ ] README describes the user, business outcome, and operating boundary.
+- [ ] Setup or preview commands are current and do not rely on private machine state.
+- [ ] No real secrets, private user data, or machine-local state are tracked.
+- [ ] Screenshots, demos, or sample outputs are safe to share publicly when the repository is public.
+- [ ] Product-specific tests or smoke checks are documented before production use.
 
-**GitHub Repository**: https://github.com/shengdabai/AI-Team
+## Roadmap
 
-## ✨ Core Features
+- Tighten the fastest path from clone to useful demo.
+- Add project-specific screenshots, sample outputs, or a short walkthrough where useful.
+- Promote repeated manual steps into scripts, tests, or documented workflows.
+- Keep security, privacy, and licensing boundaries explicit as the project evolves.
 
-### 🎯 Multi-Model Chat (Priority 1)
-- Type `@` to select AI models, supporting second-level menu for specific versions
-- Support mentioning multiple models simultaneously for answer comparison
-- Support for 20+ mainstream AI models
+## Maintainer Notes
 
-### 📎 File/Image Upload Analysis (Priority 1)
-- PNG/JPEG/WebP/GIF images (up to 1.5 MiB) and text/Markdown/JSON/CSV (up to 100000 bytes); PDF is not supported
-- Automatically uploaded content is sent to AI as context
-
-### 🔗 Web Page Link Analysis (Priority 1)
-- Automatically extract web page content from URLs
-- Used as context for AI analysis
-
-### 🪄 GPTs Import (Priority 2)
-- One-click import of OpenAI Assistants
-- List import only; Assistants conversations are not implemented. Mentions preserve the input and ask the user to select a regular model
-
-### 📚 Content Import (Priority 2)
-- Support importing content from GetNote and NotebookLM
-- Can be referenced as context after import
-
-### 💾 Chat History + Export (Priority 3)
-- Automatically save conversations locally
-- One-click export to Markdown format
-
-### ⚙️ Custom Models (Priority 4)
-- Add any OpenAI compatible API
-- Custom endpoint, model ID, API Key
-
-## 🤖 Supported AI Models (using actual API model IDs)
-
-### OpenAI
-| Model | @ Name | Description |
-|------|--------|------|
-| GPT-4.1 | `@gpt-4.1` | Latest flagship (2025) |
-| GPT-4.1 Mini | `@gpt-4.1-mini` | Lightweight version |
-| GPT-4o | `@gpt-4o` | Stable version |
-| GPT-4o Mini | `@gpt-4o-mini` | Fast economical version |
-| o1 | `@o1` | Reasoning model |
-| o1-mini | `@o1-mini` | Lightweight reasoning |
-| o3-mini | `@o3-mini` | Latest reasoning (NEW) |
-
-### Anthropic Claude
-| Model | @ Name | Description |
-|------|--------|------|
-| Claude 3.5 Sonnet v2 | `@claude-3.5-sonnet-20250618` | Latest flagship (2025) |
-| Claude 3.5 Sonnet | `@claude-3.5-sonnet-20241022` | Stable version |
-| Claude 3.5 Haiku | `@claude-3.5-haiku-20241022` | Fast response |
-| Claude 3 Opus | `@claude-3-opus-20240229` | Most capable |
-
-### Google Gemini
-| Model | @ Name | Description |
-|------|--------|------|
-| Gemini 2.0 Flash Exp | `@gemini-2.0-flash-exp` | Latest experimental |
-| Gemini 2.0 Flash Thinking | `@gemini-2.0-flash-thinking-exp` | Reasoning version |
-| Gemini 1.5 Pro | `@gemini-1.5-pro` | Long context (stable) |
-| Gemini 1.5 Flash | `@gemini-1.5-flash` | Fast response |
-| Gemini 1.5 Flash 8B | `@gemini-1.5-flash-8b` | Economical version |
-
-### xAI Grok
-| Model | @ Name | Description |
-|------|--------|------|
-| Grok 2 | `@grok-2-1212` | Stable version |
-| Grok Vision | `@grok-vision-beta` | Visual understanding |
-| Grok Beta | `@grok-beta` | Basic version |
-
-### DeepSeek
-| Model | @ Name | Description |
-|------|--------|------|
-| DeepSeek V3 | `@deepseek-chat` | Latest version |
-| DeepSeek R1 | `@deepseek-reasoner` | Reasoning model |
-| DeepSeek Coder | `@deepseek-coder` | Code expert |
-
-### OpenRouter (Recommended - 100+ models)
-One API Key to access all mainstream models:
-- `@openai/gpt-4o` `@openai/o1-mini` `@anthropic/claude-3.5-sonnet`
-- `@google/gemini-2.0-flash-exp:free` `@deepseek/deepseek-chat` `@deepseek/deepseek-r1`
-- `@meta-llama/llama-3.3-70b-instruct` `@mistralai/mistral-large-2411`
-
-### Chinese Models
-| Platform | Model | @ Name |
-|------|------|--------|
-| 豆包 | 2.0 Pro | `@doubao-2.0-pro` |
-| 豆包 | 1.5 Pro 256K | `@doubao-1.5-pro-256k` |
-| 通义千问 | Qwen 2.5 Max | `@qwen-2.5-max` |
-| 通义千问 | Qwen Max | `@qwen-max-latest` |
-| Kimi | Moonshot V2 Auto | `@moonshot-v2-auto` |
-| 智谱 | GLM-5 Plus | `@glm-5-plus` |
-
-## 🚀 Quick Start
-
-### 1. Configure API Key
-1. Open Settings ⚙️
-2. Enter API Key (Recommended OpenRouter, one key for 100+ models)
-3. Save
-
-### 2. Start Chatting
-```
-@gpt-4o Hello, introduce yourself
-```
-
-### 3. Multi-Model Collaboration
-```
-@claude-3.5-sonnet-20241022 @gemini-2.0-flash Analyze and compare: Impact of AI on education
-```
-
-### 4. Upload File Analysis
-1. Click 📎 to upload file
-2. Enter question, select model
-3. Send
-
-### 5. Web Page Link Analysis
-1. Click 🔗
-2. Enter web page URL
-3. Get content and ask questions
-
-## 🛠️ Technical Architecture
-
-- **Frontend**: TailwindCSS + Vanilla JS
-- **Backend**: Hono (Cloudflare Workers)
-- **Deployment**: Cloudflare Pages
-- **Storage**: LocalStorage (client-side)
-
-Outbound APIs remain disabled by default. Enabling requires verified Cloudflare Access JWTs and a
-`PROXY_RATE_LIMITER` binding exposing `limit({ key })`; missing controls fail closed. Pages requires
-an RPC service adapter rather than a native `ratelimits` declaration with the locked Wrangler version.
-URL fetching requires exact trusted domains in `FETCH_ALLOWED_HOSTS`, rejects redirects, and caps
-HTML/text responses at 1 MiB. See the Chinese security section above for configuration and test limits.
-
-## 📁 Project Structure
-
-```
-AI-Team/
-├── src/
-│   └── index.tsx         # Hono backend + HTML
-├── public/
-│   └── static/
-│       └── app.js        # Frontend application logic
-├── dist/                  # Build output
-├── ecosystem.config.cjs   # PM2 configuration
-├── wrangler.jsonc        # Cloudflare configuration
-├── vite.config.ts        # Vite build configuration
-└── package.json
-```
-
-## 💻 Local Development
-
-```bash
-# Install dependencies
-npm ci
-
-# Build
-npm run build
-
-# Local development
-npm run preview
-
-# Deploy
-npm run deploy
-```
-
-## 📝 Changelog
-
-### v3.2 (2025-12-27)
-- ✨ Updated to latest AI models (December 2025)
-- 📊 OpenAI: Added GPT-4.1, o3-mini
-- 📊 Claude: Updated to Claude 3.5 Sonnet v2 (20250618)
-- 📊 Gemini: Added Gemini 2.0 Flash Exp, Flash Thinking Exp
-- 🔧 Optimized reasoning model max_tokens parameter handling
-- 🐛 Fixed model configurations for multiple API providers
-
-### v3.1 (2025-12-26)
-- 🔧 Updated all model IDs to actual API-supported formats
-- 🐛 Fixed max_tokens parameter issue (reasoning models use max_completion_tokens)
-- 📊 OpenAI: gpt-4o, o1, o1-mini etc.
-- 📊 Gemini: gemini-2.0-flash, gemini-1.5-pro etc.
-- 📊 Claude: claude-3.5-sonnet-20241022, claude-3-opus-20240229 etc.
-
-### v3.0 (2025-12-26)
-- 🎨 Brand new professional interface design
-- 🐛 Fixed message sending functionality
-- 🔧 Fixed JavaScript CDN library conflicts
-- 📱 Optimized responsive layout
-
-### v2.0 (2025-12-26)
-- ✅ Added OpenRouter support (100+ models)
-- 📋 Upgraded model selector to second-level menu
-
-### v1.0 (2025-12-26)
-- 🚀 Initial version release
-- 💬 Slack-style multi-model chat
-- 📎 File/image upload
-- 🔗 Web page link analysis
-- 💾 Local chat history saving
-
-## 📄 License
-
-MIT License
-
----
-
-Made with ❤️ by Tony
+Maintained by [Tony Sheng](https://github.com/shengdabai). This README is written as a business-facing handoff: it should help a future collaborator, client, or reviewer understand why the repository exists, how to inspect it, and what must be true before it is reused or shipped.

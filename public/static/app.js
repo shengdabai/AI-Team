@@ -64,7 +64,6 @@
         { id: 'o1', name: 'o1', tag: 'Reasoning' },
         { id: 'o1-mini', name: 'o1 Mini' },
         { id: 'o3-mini', name: 'o3 Mini', tag: 'NEW' },
-        { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
         { id: 'gpt-4.1', name: 'GPT-4.1', tag: 'LATEST' },
         { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini' },
         { id: 'chatgpt-4o-latest', name: 'ChatGPT-4o Latest' },
@@ -80,7 +79,6 @@
         { id: 'claude-3-5-sonnet-20250618', name: 'Claude 3.5 Sonnet v2', tag: 'LATEST' },
         { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', tag: 'Fast' },
         { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', tag: 'Premium' },
-        { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet' },
       ]
     },
     gemini: {
@@ -89,7 +87,7 @@
       color: '#4285f4',
       keyName: 'geminiKey',
       models: [
-        { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash Exp', tag: 'LATEST' },
+        { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', tag: 'LATEST' },
         { id: 'gemini-2.0-flash-thinking-exp', name: 'Gemini 2.0 Flash Thinking', tag: 'Reasoning' },
         { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', tag: 'STABLE' },
         { id: 'gemini-1.5-pro-002', name: 'Gemini 1.5 Pro v2' },
@@ -128,7 +126,7 @@
         { id: 'openai/gpt-4o', name: 'GPT-4o', tag: 'HOT' },
         { id: 'openai/o1-mini', name: 'o1 Mini', tag: 'NEW' },
         { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', tag: 'HOT' },
-        { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash', tag: 'FREE' },
+        { id: 'google/gemini-2.0-flash', name: 'Gemini 2.0 Flash', tag: 'FREE' },
         { id: 'deepseek/deepseek-chat', name: 'DeepSeek V3', tag: 'VALUE' },
         { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1', tag: 'Reasoning' },
         { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B', tag: 'Open' },
