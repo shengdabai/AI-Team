@@ -7,15 +7,49 @@
 
   // ==================== Constants ====================
   const STORAGE_KEYS = {
-    API_KEYS: 'aiteam_api_keys',
     CHANNELS: 'aiteam_channels',
     MESSAGES: 'aiteam_messages',
     GPTS: 'aiteam_gpts',
     IMPORTED_CONTENT: 'aiteam_imported',
     CUSTOM_MODELS: 'aiteam_custom_models',
-    CURRENT_CHANNEL: 'aiteam_current_channel',
-    SEARCH_KEY: 'aiteam_search_key'
+    CURRENT_CHANNEL: 'aiteam_current_channel'
   };
+  const LEGACY_SECRET_STORAGE_KEYS = ['aiteam_api_keys', 'aiteam_search_key'];
+
+  function withoutApiKey(model) {
+    const { apiKey, ...safeModel } = model;
+    return safeModel;
+  }
+
+  function clearPersistedSecrets() {
+    for (const key of LEGACY_SECRET_STORAGE_KEYS) {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // Continue attempting every secret-bearing key independently.
+      }
+    }
+
+    let customModels;
+    try {
+      customModels = localStorage.getItem(STORAGE_KEYS.CUSTOM_MODELS);
+    } catch {
+      return;
+    }
+    if (!customModels) return;
+
+    try {
+      const sanitizedModels = JSON.parse(customModels).map(withoutApiKey);
+      state.customModels = sanitizedModels;
+      localStorage.setItem(STORAGE_KEYS.CUSTOM_MODELS, JSON.stringify(sanitizedModels));
+    } catch {
+      try {
+        localStorage.removeItem(STORAGE_KEYS.CUSTOM_MODELS);
+      } catch {
+        // Storage is unavailable; the application still keeps no parsed secret in memory.
+      }
+    }
+  }
 
   // Complete AI Models - Updated Dec 2025 (Using actual API model IDs)
   const AI_PROVIDERS = {
@@ -178,21 +212,20 @@
 
   // ==================== Storage Functions ====================
   function loadState() {
+    // Secret cleanup must run before and independently from parsing non-sensitive caches.
+    clearPersistedSecrets();
+
     try {
-      const keys = localStorage.getItem(STORAGE_KEYS.API_KEYS);
       const channels = localStorage.getItem(STORAGE_KEYS.CHANNELS);
       const messages = localStorage.getItem(STORAGE_KEYS.MESSAGES);
       const gpts = localStorage.getItem(STORAGE_KEYS.GPTS);
       const imported = localStorage.getItem(STORAGE_KEYS.IMPORTED_CONTENT);
-      const custom = localStorage.getItem(STORAGE_KEYS.CUSTOM_MODELS);
       const channel = localStorage.getItem(STORAGE_KEYS.CURRENT_CHANNEL);
 
-      if (keys) state.apiKeys = JSON.parse(keys);
       if (channels) state.channels = JSON.parse(channels);
       if (messages) state.messages = JSON.parse(messages);
       if (gpts) state.gpts = JSON.parse(gpts);
       if (imported) state.importedContent = JSON.parse(imported);
-      if (custom) state.customModels = JSON.parse(custom);
       if (channel) state.currentChannel = channel;
     } catch (e) {
       console.error('Error loading state:', e);
@@ -201,30 +234,17 @@
 
   function saveState() {
     try {
-      localStorage.setItem(STORAGE_KEYS.API_KEYS, JSON.stringify(state.apiKeys));
       localStorage.setItem(STORAGE_KEYS.CHANNELS, JSON.stringify(state.channels));
       localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(state.messages));
       localStorage.setItem(STORAGE_KEYS.GPTS, JSON.stringify(state.gpts));
       localStorage.setItem(STORAGE_KEYS.IMPORTED_CONTENT, JSON.stringify(state.importedContent));
-      localStorage.setItem(STORAGE_KEYS.CUSTOM_MODELS, JSON.stringify(state.customModels));
+      localStorage.setItem(
+        STORAGE_KEYS.CUSTOM_MODELS,
+        JSON.stringify(state.customModels.map(withoutApiKey))
+      );
       localStorage.setItem(STORAGE_KEYS.CURRENT_CHANNEL, state.currentChannel);
     } catch (e) {
       console.error('Error saving state:', e);
-    }
-  }
-
-  // ==================== Key Storage (Base64 obfuscation only — NOT encryption) ====================
-  // API keys are stored as Base64 in localStorage. This is obfuscation, not encryption.
-  // Keys are effectively stored in plaintext in the browser. Do not rely on this for security.
-  function encodeKey(key) {
-    return btoa(key);
-  }
-
-  function decodeKey(encoded) {
-    try {
-      return atob(encoded);
-    } catch {
-      return encoded;
     }
   }
 
@@ -234,7 +254,7 @@
     if (!container) return;
 
     container.innerHTML = state.channels.map(ch => `
-      <div class="channel-item ${ch.id === state.currentChannel ? 'active' : ''}" data-channel="${ch.id}">
+      <div class="channel-item ${ch.id === state.currentChannel ? 'active' : ''}" data-channel="${escapeHtml(ch.id)}">
         <i class="fas fa-hashtag text-slate-500 mr-2"></i>
         <span class="text-sm">${escapeHtml(ch.name)}</span>
       </div>
@@ -268,7 +288,7 @@
               <span class="status-indicator ${statusClass}"></span>
               <i class="${provider.icon.startsWith('fab') ? provider.icon : 'fas ' + provider.icon}" style="color: ${provider.color}"></i>
               <span class="text-sm font-medium">${provider.name}</span>
-              ${!hasKey ? '<span class="text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded ml-1">未配置</span>' : ''}
+              ${!hasKey ? '<span class="text-[11px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded ml-1">未配置</span>' : ''}
             </div>
             <div class="flex items-center gap-1">
               <i class="fas fa-chevron-down text-xs text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}"></i>
@@ -319,8 +339,7 @@
         const modelId = el.dataset.model;
         const input = document.getElementById('messageInput');
         if (input) {
-          const shortName = modelId.split('/').pop();
-          input.value += `@${shortName} `;
+          input.value += `@${modelId} `;
           input.focus();
         }
       });
@@ -353,7 +372,7 @@
     }
 
     container.innerHTML = state.gpts.map(gpt => `
-      <div class="flex items-center gap-2 px-2 py-1.5 text-slate-300 cursor-pointer hover:bg-slate-700/30 rounded transition-all" title="${escapeHtml(gpt.description || '')}" data-gpt="${gpt.mention}">
+      <div class="flex items-center gap-2 px-2 py-1.5 text-slate-300 cursor-pointer hover:bg-slate-700/30 rounded transition-all" title="${escapeHtml(gpt.description || '')}" data-gpt="${escapeHtml(gpt.mention)}">
         <span class="status-indicator online"></span>
         <i class="fas fa-magic text-purple-400 text-xs"></i>
         <span class="truncate text-sm">@${escapeHtml(gpt.mention)}</span>
@@ -382,7 +401,7 @@
 
     container.innerHTML = state.importedContent.map((item, idx) => `
       <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-slate-300 group">
-        <div class="flex items-center gap-2 truncate cursor-pointer hover:text-white transition-all" data-content="${item.mention}">
+        <div class="flex items-center gap-2 truncate cursor-pointer hover:text-white transition-all" data-content="${escapeHtml(item.mention)}">
           <i class="fas ${item.source === 'getnote' ? 'fa-sticky-note text-yellow-400' : item.source === 'notebooklm' ? 'fa-book text-blue-400' : 'fa-file text-slate-400'} text-xs"></i>
           <span class="truncate text-sm" title="${escapeHtml(item.name)}">@${escapeHtml(item.mention)}</span>
         </div>
@@ -462,7 +481,7 @@
       if (msg.attachment.type === 'image') {
         attachmentHtml = `
           <div class="mt-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
-            <img src="${msg.attachment.data}" alt="${escapeHtml(msg.attachment.name)}" class="max-h-48 rounded-lg" />
+            <img src="${escapeHtml(msg.attachment.data)}" alt="${escapeHtml(msg.attachment.name)}" class="max-h-48 rounded-lg" />
           </div>
         `;
       } else if (msg.attachment.type === 'url') {
@@ -504,8 +523,8 @@
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-3 mb-1">
-            <span class="font-semibold text-white">${isUser ? 'Tony' : getModelDisplayName(msg.model)}</span>
-            ${!isUser && msg.model ? `<span class="provider-badge" style="background-color: ${providerInfo?.color}20; color: ${providerInfo?.color}">@${msg.model}</span>` : ''}
+            <span class="font-semibold text-white">${isUser ? 'Tony' : escapeHtml(getModelDisplayName(msg.model))}</span>
+            ${!isUser && msg.model ? `<span class="provider-badge" style="background-color: ${providerInfo?.color}20; color: ${providerInfo?.color}">@${escapeHtml(msg.model)}</span>` : ''}
             <span class="text-xs text-slate-500">${formatTime(msg.timestamp)}</span>
           </div>
           <div class="msg-content text-slate-200">${content}</div>
@@ -580,7 +599,7 @@
           <div class="px-4 py-2.5 flex items-center gap-2 text-sm font-semibold border-b border-slate-700/50" style="color: ${provider.color}">
             <i class="${provider.icon.startsWith('fab') ? provider.icon : 'fas ' + provider.icon}"></i>
             ${provider.name}
-            ${!hasKey ? '<span class="text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded ml-1">未配置</span>' : ''}
+            ${!hasKey ? '<span class="text-[11px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded ml-1">未配置</span>' : ''}
             <span class="text-xs text-slate-500 font-normal">${displayModels.length} models</span>
           </div>
           <div class="py-1">
@@ -611,8 +630,8 @@
           </div>
           <div class="py-1">
             ${matchingGpts.map(g => `
-              <div class="mention-item px-4 py-2 flex items-center gap-2 hover:bg-purple-500/10 cursor-pointer transition-all" data-gpt="${g.mention}">
-                <span class="text-white font-medium">@${g.mention}</span>
+              <div class="mention-item px-4 py-2 flex items-center gap-2 hover:bg-purple-500/10 cursor-pointer transition-all" data-gpt="${escapeHtml(g.mention)}">
+                <span class="text-white font-medium">@${escapeHtml(g.mention)}</span>
                 <span class="text-xs text-slate-500">${escapeHtml(g.name)}</span>
               </div>
             `).join('')}
@@ -634,8 +653,8 @@
           </div>
           <div class="py-1">
             ${matchingContent.map(i => `
-              <div class="mention-item px-4 py-2 flex items-center gap-2 hover:bg-amber-500/10 cursor-pointer transition-all" data-content="${i.mention}">
-                <span class="text-white font-medium">@${i.mention}</span>
+              <div class="mention-item px-4 py-2 flex items-center gap-2 hover:bg-amber-500/10 cursor-pointer transition-all" data-content="${escapeHtml(i.mention)}">
+                <span class="text-white font-medium">@${escapeHtml(i.mention)}</span>
                 <span class="text-xs text-slate-500">${escapeHtml(i.name)}</span>
               </div>
             `).join('')}
@@ -657,8 +676,8 @@
           </div>
           <div class="py-1">
             ${matchingCustom.map(m => `
-              <div class="mention-item px-4 py-2 flex items-center gap-2 hover:bg-pink-500/10 cursor-pointer transition-all" data-custom="${m.mention}">
-                <span class="text-white font-medium">@${m.mention}</span>
+              <div class="mention-item px-4 py-2 flex items-center gap-2 hover:bg-pink-500/10 cursor-pointer transition-all" data-custom="${escapeHtml(m.mention)}">
+                <span class="text-white font-medium">@${escapeHtml(m.mention)}</span>
                 <span class="text-xs text-slate-500">${escapeHtml(m.name)}</span>
               </div>
             `).join('')}
@@ -691,7 +710,7 @@
         }
 
         if (model) {
-          insertMention(model.split('/').pop());
+          insertMention(model);
         }
       });
     });
@@ -731,11 +750,12 @@
     }
 
     // Parse mentions
-    const mentionRegex = /@([\w\-\.\/]+)/g;
-    const mentions = [...text.matchAll(mentionRegex)].map(m => m[1]);
+    const mentionRegex = /@([\w\-\.\/]+(?::[\w-]+)?)/g;
+    const mentions = [...new Set([...text.matchAll(mentionRegex)].map(m => m[1]))];
 
     // Find valid AI mentions
     const aiMentions = [];
+    let hasUnsupportedGpt = false;
     mentions.forEach(m => {
       for (const [providerKey, provider] of Object.entries(AI_PROVIDERS)) {
         const model = provider.models.find(mod =>
@@ -749,9 +769,8 @@
         }
       }
 
-      // Check GPTs
-      if (state.gpts.find(g => g.mention === m)) {
-        aiMentions.push({ model: m, provider: 'openai', isGpt: true });
+      if (state.gpts.some(g => g.mention === m)) {
+        hasUnsupportedGpt = true;
         return;
       }
 
@@ -761,6 +780,11 @@
         aiMentions.push({ model: m, provider: 'custom', customConfig: custom });
       }
     });
+
+    if (hasUnsupportedGpt) {
+      showToast('导入的 GPTs 暂不支持对话，请选择普通模型。输入和附件已保留。', 'error');
+      return;
+    }
 
     // Find context mentions
     const contextMentions = mentions.filter(m => state.importedContent.find(i => i.mention === m));
@@ -778,7 +802,10 @@
     if (!state.messages[state.currentChannel]) {
       state.messages[state.currentChannel] = [];
     }
-    state.messages[state.currentChannel].push(userMessage);
+    // Keep this conversation reference across awaits, even if the user switches
+    // channels. Replacing a cleared history also leaves pending replies detached.
+    const channelMessages = state.messages[state.currentChannel];
+    channelMessages.push(userMessage);
     saveState();
     renderMessages();
 
@@ -793,16 +820,16 @@
 
     // Send to each mentioned AI
     for (const ai of aiMentions) {
-      await callAI(ai, text, userMessage);
+      await callAI(ai, text, userMessage, channelMessages);
     }
 
     // Meeting Mode: Let AIs discuss with each other
     if (state.meetingMode && aiMentions.length >= 2) {
-      await runMeetingMode(aiMentions, text);
+      await runMeetingMode(aiMentions, text, channelMessages);
     }
   }
 
-  async function callAI(ai, userText, userMessage) {
+  async function callAI(ai, userText, userMessage, channelMessages) {
     const modelShortName = ai.model.split('/').pop();
     showTypingIndicator(modelShortName);
 
@@ -810,9 +837,9 @@
       let response;
 
       if (ai.provider === 'custom' && ai.customConfig) {
-        response = await callCustomModel(ai.customConfig, userText, userMessage);
+        response = await callCustomModel(ai.customConfig, userText, userMessage, channelMessages);
       } else {
-        response = await callBuiltInModel(ai, userText, userMessage);
+        response = await callBuiltInModel(ai, userText, userMessage, channelMessages);
       }
 
       const aiMessage = {
@@ -823,7 +850,7 @@
         timestamp: new Date().toISOString()
       };
 
-      state.messages[state.currentChannel].push(aiMessage);
+      channelMessages.push(aiMessage);
       saveState();
 
     } catch (error) {
@@ -837,7 +864,7 @@
         timestamp: new Date().toISOString()
       };
 
-      state.messages[state.currentChannel].push(errorMessage);
+      channelMessages.push(errorMessage);
       saveState();
     }
 
@@ -845,10 +872,10 @@
     renderMessages();
   }
 
-  async function callBuiltInModel(ai, userText, userMessage) {
+  async function callBuiltInModel(ai, userText, userMessage, channelMessages) {
     // Special handling for Search
     if (ai.provider === 'search') {
-      const apiKey = decodeKey(state.apiKeys.searchKey);
+      const apiKey = state.apiKeys.searchKey;
       if (!apiKey) throw new Error('请先配置 Web Search API Key (Serper)');
 
       const response = await fetch('/api/search', {
@@ -871,13 +898,13 @@
     }
 
     const provider = AI_PROVIDERS[ai.provider];
-    const apiKey = decodeKey(state.apiKeys[provider.keyName]);
+    const apiKey = state.apiKeys[provider.keyName];
 
     if (!apiKey) {
       throw new Error(`请先配置 ${provider.name} 的 API Key`);
     }
 
-    const messages = buildMessageHistory(userText, userMessage);
+    const messages = buildMessageHistory(userText, userMessage, channelMessages);
 
     const response = await fetch(`/api/proxy/${ai.provider}`, {
       method: 'POST',
@@ -902,7 +929,7 @@
     return data.choices?.[0]?.message?.content || '无响应内容';
   }
 
-  async function callCustomModel(custom, userText, userMessage) {
+  async function callCustomModel(custom, userText, userMessage, channelMessages) {
     const response = await fetch(custom.endpoint, {
       method: 'POST',
       headers: {
@@ -911,7 +938,7 @@
       },
       body: JSON.stringify({
         model: custom.modelId || 'default',
-        messages: buildMessageHistory(userText, userMessage),
+        messages: buildMessageHistory(userText, userMessage, channelMessages),
         max_tokens: 4096
       })
     });
@@ -922,9 +949,8 @@
     return data.choices?.[0]?.message?.content || '无响应内容';
   }
 
-  function buildMessageHistory(currentText, currentMessage) {
+  function buildMessageHistory(currentText, currentMessage, channelMessages) {
     const messages = [];
-    const channelMessages = state.messages[state.currentChannel] || [];
     // Increase history window
     const recentMessages = channelMessages.slice(-20);
 
@@ -981,7 +1007,7 @@
   }
 
   // ==================== Meeting Mode (AI Auto-Discussion) ====================
-  async function runMeetingMode(participants, topic) {
+  async function runMeetingMode(participants, topic, channelMessages = state.messages[state.currentChannel] || []) {
     // 系统提示：告知用户会议开始
     const systemMessage = {
       id: Date.now(),
@@ -990,12 +1016,9 @@
       content: `🎤 **会议模式已启动**\n\n主题: ${topic}\n参与者: ${participants.map(p => p.model.split('/').pop()).join(', ')}\n轮数: ${state.meetingRounds}`,
       timestamp: new Date().toISOString()
     };
-    state.messages[state.currentChannel].push(systemMessage);
+    channelMessages.push(systemMessage);
     saveState();
     renderMessages();
-
-    // 获取当前频道的最新消息作为上下文
-    const channelMessages = state.messages[state.currentChannel] || [];
 
     // 每轮让每个AI回复其他AI的观点
     for (let round = 0; round < state.meetingRounds; round++) {
@@ -1028,7 +1051,7 @@
 
         try {
           const provider = AI_PROVIDERS[currentAI.provider];
-          const apiKey = decodeKey(state.apiKeys[provider.keyName]);
+          const apiKey = state.apiKeys[provider.keyName];
 
           if (!apiKey) continue;
 
@@ -1056,7 +1079,7 @@
             content: `**[第${round + 1}轮]** ${content}`,
             timestamp: new Date().toISOString()
           };
-          state.messages[state.currentChannel].push(aiMessage);
+          channelMessages.push(aiMessage);
           saveState();
         } catch (error) {
           console.error(`Meeting mode error for ${modelName}:`, error);
@@ -1078,7 +1101,7 @@
       content: `✅ **会议结束** - 共${state.meetingRounds}轮讨论完成`,
       timestamp: new Date().toISOString()
     };
-    state.messages[state.currentChannel].push(endMessage);
+    channelMessages.push(endMessage);
     saveState();
     renderMessages();
   }
@@ -1111,7 +1134,7 @@
       </div>
       <div class="flex-1">
         <div class="flex items-center gap-3 mb-2">
-          <span class="font-semibold text-white">${getModelDisplayName(model)}</span>
+          <span class="font-semibold text-white">${escapeHtml(getModelDisplayName(model))}</span>
           <span class="text-xs text-slate-500">正在输入...</span>
         </div>
         <div class="flex gap-1.5">
@@ -1135,9 +1158,21 @@
     const file = event.target.files?.[0];
     if (!file) return;
 
+    const isImage = /^image\/(png|jpeg|webp|gif)$/.test(file.type);
+    const isText = !/\.pdf$/i.test(file.name) && file.type !== 'application/pdf' &&
+      (file.type.startsWith('text/') || /\.(txt|md|json|csv)$/i.test(file.name));
+    if (!isImage && !isText) {
+      showToast('暂不支持此文件格式（包括 PDF）。请使用文本、Markdown、JSON、CSV 或 PNG/JPEG/WebP/GIF 图片。', 'error');
+      return;
+    }
+    if (file.size > (isImage ? 1.5 * 1024 * 1024 : 100000)) {
+      showToast(isImage ? '图片不能超过 1.5 MiB' : '文本文件不能超过 100000 字节', 'error');
+      return;
+    }
     const reader = new FileReader();
+    reader.onerror = () => showToast('文件读取失败，请重新选择文件。', 'error');
 
-    if (file.type.startsWith('image/')) {
+    if (isImage) {
       reader.onload = (e) => {
         state.currentAttachment = {
           type: 'image',
@@ -1301,7 +1336,7 @@
 
   // ==================== GPTs Import ====================
   async function importGpts() {
-    const apiKey = decodeKey(state.apiKeys.openaiKey);
+    const apiKey = state.apiKeys.openaiKey;
     if (!apiKey) {
       showToast('请先配置 OpenAI API Key', 'error');
       return;
@@ -1382,13 +1417,13 @@
     Object.values(AI_PROVIDERS).forEach(provider => {
       const input = document.getElementById(provider.keyName);
       if (input && state.apiKeys[provider.keyName]) {
-        input.value = decodeKey(state.apiKeys[provider.keyName]);
+        input.value = state.apiKeys[provider.keyName];
       }
     });
 
     const searchInput = document.getElementById('searchKey');
     if (searchInput && state.apiKeys.searchKey) {
-      searchInput.value = decodeKey(state.apiKeys.searchKey);
+      searchInput.value = state.apiKeys.searchKey;
     }
   }
 
@@ -1396,7 +1431,7 @@
     Object.values(AI_PROVIDERS).forEach(provider => {
       const input = document.getElementById(provider.keyName);
       if (input && input.value.trim()) {
-        state.apiKeys[provider.keyName] = encodeKey(input.value.trim());
+        state.apiKeys[provider.keyName] = input.value.trim();
       } else if (input) {
         delete state.apiKeys[provider.keyName];
       }
@@ -1405,14 +1440,14 @@
     // Save Search Key
     const searchInput = document.getElementById('searchKey');
     if (searchInput && searchInput.value.trim()) {
-      state.apiKeys.searchKey = encodeKey(searchInput.value.trim());
+      state.apiKeys.searchKey = searchInput.value.trim();
     } else if (searchInput) {
       delete state.apiKeys.searchKey;
     }
 
     saveState();
     renderModels();
-    showToast('API Keys 已保存', 'success');
+    showToast('API Keys 仅保留在当前页面内存中', 'success');
   }
 
   // ==================== Export ====================
@@ -1452,7 +1487,7 @@
       messages: state.messages,
       gpts: state.gpts,
       importedContent: state.importedContent,
-      customModels: state.customModels
+      customModels: state.customModels.map(withoutApiKey)
     };
 
     downloadFile(JSON.stringify(data, null, 2), `aiteam-backup-${Date.now()}.json`, 'application/json');
@@ -1472,7 +1507,7 @@
         if (data.messages) state.messages = data.messages;
         if (data.gpts) state.gpts = data.gpts;
         if (data.importedContent) state.importedContent = data.importedContent;
-        if (data.customModels) state.customModels = data.customModels;
+        if (data.customModels) state.customModels = data.customModels.map(withoutApiKey);
 
         saveState();
         renderAll();
@@ -1488,6 +1523,7 @@
     if (!confirm('确定要清除所有本地数据吗？此操作不可恢复！')) return;
 
     Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+    LEGACY_SECRET_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
     location.reload();
   }
 
@@ -1565,9 +1601,9 @@
   // ==================== Utilities ====================
   function escapeHtml(text) {
     if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    // This helper is used in text nodes and double-quoted HTML attributes.
+    const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return String(text).replace(/[&<>"']/g, char => entities[char]);
   }
 
   function formatTime(isoString) {

@@ -50,3 +50,6 @@ id_dsa
 .omc/
 .codex/
 .claude/local/
+
+# OMC HUD/session runtime state
+**/.omc/state/
