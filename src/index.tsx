@@ -1,8 +1,11 @@
 import { Hono } from 'hono'
+import { validateProxyRequest } from './proxy-validation'
 import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/cloudflare-pages'
+import { bodyLimit } from 'hono/body-limit'
+import { allowedFetchUrl, readLimitedText, requireProxyAccess, type ProxyBindings } from './proxy-security'
 
-const app = new Hono()
+const app = new Hono<{ Bindings: ProxyBindings }>()
 
 // Enable CORS for API routes
 app.use('/api/*', cors({
@@ -15,6 +18,10 @@ app.use('/api/*', cors({
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Search-Key', 'X-Model'],
 }))
+
+app.use('/api/*', requireProxyAccess)
+app.use('/api/*', bodyLimit({ maxSize: 8 * 1024 * 1024,
+  onError: c => c.json({ error: 'Request too large' }, 413) }))
 
 // Serve static files
 app.use('/static/*', serveStatic())
@@ -87,8 +94,17 @@ function transformMessages(provider: string, messages: any[]) {
 
 // API Proxy for AI providers (handles CORS issues)
 app.post('/api/proxy/:provider', async (c) => {
+  if (c.env.ENABLE_PUBLIC_UPSTREAM_PROXY !== 'true') {
+    return c.json({ error: 'Public upstream proxy is disabled' }, 404)
+  }
+
   const provider = c.req.param('provider')
-  const body = await c.req.json()
+  let body: any
+  try {
+    const raw = await c.req.text()
+    if (raw.length > 8 * 1024 * 1024) return c.json({ error: 'Request too large' }, 413)
+    body = JSON.parse(raw)
+  } catch { return c.json({ error: 'Invalid JSON request' }, 400) }
   const apiKey = c.req.header('X-API-Key')
   const modelOverride = c.req.header('X-Model')
 
@@ -96,7 +112,9 @@ app.post('/api/proxy/:provider', async (c) => {
     return c.json({ error: 'API Key required' }, 401)
   }
 
-  const model = modelOverride || body.model
+  const checked = validateProxyRequest(body, provider, modelOverride)
+  if (!checked.ok) return c.json({ error: checked.error }, 400)
+  const model = checked.model
 
   const providerConfigs: Record<string, { url: string; headers: Record<string, string> }> = {
     openai: {
@@ -111,7 +129,7 @@ app.post('/api/proxy/:provider', async (c) => {
       }
     },
     gemini: {
-      url: `https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-1.5-pro'}:generateContent?key=${apiKey}`,
+      url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
       headers: {}
     },
     deepseek: {
@@ -148,7 +166,7 @@ app.post('/api/proxy/:provider', async (c) => {
     }
   }
 
-  const config = providerConfigs[provider]
+  const config = Object.hasOwn(providerConfigs, provider) ? providerConfigs[provider] : null
   if (!config) {
     return c.json({ error: 'Unknown provider' }, 400)
   }
@@ -191,6 +209,8 @@ app.post('/api/proxy/:provider', async (c) => {
 
     const response = await fetch(config.url, {
       method: 'POST',
+      redirect: 'manual',
+      signal: AbortSignal.timeout(30000),
       headers: {
         'Content-Type': 'application/json',
         ...config.headers
@@ -198,6 +218,7 @@ app.post('/api/proxy/:provider', async (c) => {
       body: JSON.stringify(requestBody)
     })
 
+    if (!response.ok) return c.json({ error: 'Upstream provider rejected the request' }, 502)
     const data: any = await response.json()
 
     // Normalize response to OpenAI format
@@ -225,13 +246,21 @@ app.post('/api/proxy/:provider', async (c) => {
 
     return c.json(normalizedResponse)
   } catch (error: any) {
-    return c.json({ error: error.message }, 500)
+    return c.json({ error: 'Upstream provider request failed' }, 502)
   }
 })
 
 // Search Endpoint (using Google Custom Search or Serper)
 app.post('/api/search', async (c) => {
-  const { query } = await c.req.json()
+  if (c.env.ENABLE_PUBLIC_UPSTREAM_PROXY !== 'true') {
+    return c.json({ error: 'Public upstream proxy is disabled' }, 404)
+  }
+
+  let query: unknown
+  try { ({ query } = await c.req.json()) } catch { return c.json({ error: 'Invalid JSON request' }, 400) }
+  if (typeof query !== 'string' || !query.trim() || query.length > 2000) {
+    return c.json({ error: 'query must contain 1–2000 characters' }, 400)
+  }
   const apiKey = c.req.header('X-Search-Key')
 
   if (!apiKey) {
@@ -241,6 +270,8 @@ app.post('/api/search', async (c) => {
   try {
     const response = await fetch('https://google.serper.dev/search', {
       method: 'POST',
+      redirect: 'manual',
+      signal: AbortSignal.timeout(15000),
       headers: {
         'X-API-KEY': apiKey,
         'Content-Type': 'application/json'
@@ -248,53 +279,40 @@ app.post('/api/search', async (c) => {
       body: JSON.stringify({ q: query })
     })
 
+    if (!response.ok) return c.json({ error: 'Search provider rejected the request' }, 502)
     const data = await response.json()
     return c.json(data)
   } catch (error: any) {
-    return c.json({ error: error.message }, 500)
+    return c.json({ error: 'Search provider request failed' }, 502)
   }
 })
 
 // Fetch URL content for analysis
 app.post('/api/fetch-url', async (c) => {
-  const { url } = await c.req.json()
-
-  // Validate URL to prevent SSRF attacks
-  try {
-    const parsed = new URL(url)
-
-    if (parsed.protocol !== 'https:') {
-      return c.json({ error: 'Only HTTPS URLs are allowed' }, 400)
-    }
-
-    const hostname = parsed.hostname.toLowerCase()
-    const privatePatterns = [
-      /^localhost$/,
-      /^127\.\d+\.\d+\.\d+$/,
-      /^10\.\d+\.\d+\.\d+$/,
-      /^192\.168\.\d+\.\d+$/,
-      /^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/,
-      /^169\.254\.\d+\.\d+$/,
-      /^0\.0\.0\.0$/,
-      /^\[::1\]$/,
-      /^\[::ffff:127\./,
-      /^0+$/,
-    ]
-
-    if (privatePatterns.some(pattern => pattern.test(hostname))) {
-      return c.json({ error: 'Access to private/internal addresses is not allowed' }, 403)
-    }
-  } catch {
-    return c.json({ error: 'Invalid URL format' }, 400)
+  if (c.env.ENABLE_PUBLIC_UPSTREAM_PROXY !== 'true') {
+    return c.json({ error: 'Public upstream proxy is disabled' }, 404)
   }
 
+  let url: unknown
+  try { ({ url } = await c.req.json()) } catch { return c.json({ error: 'Invalid JSON request' }, 400) }
+  const target = allowedFetchUrl(url, c.env.FETCH_ALLOWED_HOSTS)
+  if (!target) return c.json({ error: 'URL is not an allowed HTTPS destination' }, 403)
+
   try {
-    const response = await fetch(url, {
+    const response = await fetch(target.href, {
+      redirect: 'manual',
+      signal: AbortSignal.timeout(15000),
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; AITeamBot/1.0)'
       }
     })
-    const html = await response.text()
+    if (!response.ok) return c.json({ error: 'Page request failed' }, 502)
+    const contentType = response.headers.get('Content-Type') || ''
+    if (!/^(?:text\/html|text\/plain)(?:;|$)/i.test(contentType)) {
+      await response.body?.cancel()
+      return c.json({ error: 'Only HTML or plain text pages are supported' }, 415)
+    }
+    const html = await readLimitedText(response)
 
     const textContent = html
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
@@ -306,12 +324,16 @@ app.post('/api/fetch-url', async (c) => {
 
     return c.json({ content: textContent, url })
   } catch (error: any) {
-    return c.json({ error: error.message }, 500)
+    return c.json({ error: 'Page request failed' }, 502)
   }
 })
 
 // OpenAI GPTs list endpoint
 app.post('/api/gpts/list', async (c) => {
+  if (c.env.ENABLE_PUBLIC_UPSTREAM_PROXY !== 'true') {
+    return c.json({ error: 'Public upstream proxy is disabled' }, 404)
+  }
+
   const apiKey = c.req.header('X-API-Key')
 
   if (!apiKey) {
@@ -320,16 +342,19 @@ app.post('/api/gpts/list', async (c) => {
 
   try {
     const response = await fetch('https://api.openai.com/v1/assistants?limit=100', {
+      redirect: 'manual',
+      signal: AbortSignal.timeout(15000),
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'OpenAI-Beta': 'assistants=v2'
       }
     })
 
+    if (!response.ok) return c.json({ error: 'Assistants provider rejected the request' }, 502)
     const data = await response.json()
     return c.json(data)
   } catch (error: any) {
-    return c.json({ error: error.message }, 500)
+    return c.json({ error: 'Assistants provider request failed' }, 502)
   }
 })
 
@@ -387,9 +412,9 @@ app.get('/', (c) => {
       .msg-content h1, .msg-content h2, .msg-content h3 { color: #f8fafc; margin: 20px 0 12px; font-weight: 600; }
       .msg-content blockquote { border-left: 4px solid #3b82f6; padding-left: 16px; margin: 16px 0; color: #94a3b8; font-style: italic; }
       .msg-content a { color: #60a5fa; text-decoration: underline; }
-      .msg-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+      .msg-content table { border-collapse: collapse; width: 100%; margin: 16px 0; display: block; overflow-x: auto; }
       .msg-content th, .msg-content td { border: 1px solid #334155; padding: 10px 14px; text-align: left; }
-      .msg-content th { background: #1e293b; color: #f1f5f9; font-weight: 600; }
+      .msg-content th { background: #1e293b; color: #f1f5f9; font-weight: 600; white-space: nowrap; }
       
       .glass-panel { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(71, 85, 105, 0.4); }
       .glass-light { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(71, 85, 105, 0.3); }
@@ -404,7 +429,7 @@ app.get('/', (c) => {
       .channel-item:hover { background: rgba(59, 130, 246, 0.1); }
       .channel-item.active { background: rgba(59, 130, 246, 0.2); border-left: 3px solid #3b82f6; }
       
-      .provider-badge { font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 600; letter-spacing: 0.3px; }
+      .provider-badge { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600; letter-spacing: 0.3px; }
       
       .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 24px; border-radius: 12px; color: white; font-weight: 500; z-index: 9999; animation: slideRight 0.3s ease-out; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
       .toast.success { background: linear-gradient(135deg, #10b981, #059669); }
@@ -421,9 +446,9 @@ app.get('/', (c) => {
     </style>
 </head>
 <body class="text-slate-200 min-h-screen">
-    <div id="app" class="flex h-screen overflow-hidden">
+    <div id="app" class="flex flex-col md:flex-row h-screen overflow-hidden">
         <!-- Sidebar -->
-        <aside class="w-[280px] bg-slate-900/80 backdrop-blur-xl border-r border-slate-700/50 flex flex-col shrink-0">
+        <aside class="w-full md:w-[280px] max-h-[40vh] md:max-h-none bg-slate-900/80 backdrop-blur-xl border-b md:border-b-0 md:border-r border-slate-700/50 flex flex-col shrink-0">
             <!-- Logo -->
             <div class="p-5 border-b border-slate-700/50">
                 <div class="flex items-center gap-3">
@@ -562,14 +587,14 @@ app.get('/', (c) => {
                 </div>
                 
                 <!-- Mentions Dropdown -->
-                <div id="mentionsDropdown" class="hidden absolute bottom-36 left-[300px] glass-panel rounded-xl shadow-2xl max-h-[400px] overflow-y-auto w-[360px] z-50"></div>
+                <div id="mentionsDropdown" class="hidden absolute bottom-36 left-4 md:left-[300px] glass-panel rounded-xl shadow-2xl max-h-[400px] overflow-y-auto w-[calc(100vw-2rem)] md:w-[360px] z-50"></div>
                 
                 <!-- Input -->
                 <div class="flex items-end gap-3">
                     <div class="flex gap-1">
                         <label class="w-11 h-11 rounded-xl hover:bg-slate-700/50 flex items-center justify-center text-slate-400 hover:text-blue-400 cursor-pointer transition-all" title="上传文件">
                             <i class="fas fa-paperclip text-lg"></i>
-                            <input type="file" id="fileInput" class="hidden" accept="image/*,.pdf,.txt,.md,.json,.csv" />
+                            <input type="file" id="fileInput" class="hidden" accept="image/png,image/jpeg,image/webp,image/gif,.txt,.md,.json,.csv" />
                         </label>
                         <button id="urlBtn" class="w-11 h-11 rounded-xl hover:bg-slate-700/50 flex items-center justify-center text-slate-400 hover:text-blue-400 transition-all" title="分析网页">
                             <i class="fas fa-link text-lg"></i>
@@ -626,7 +651,7 @@ app.get('/', (c) => {
                     <div class="p-5 rounded-xl bg-gradient-to-r from-purple-500/15 to-blue-500/15 border border-purple-500/30">
                         <label class="block text-sm font-semibold mb-2 text-white">
                             <i class="fas fa-route text-purple-400 mr-2"></i>OpenRouter API Key
-                            <span class="ml-2 text-[10px] bg-gradient-to-r from-purple-500 to-blue-500 text-white px-2.5 py-1 rounded-full font-bold">推荐 · 100+模型</span>
+                            <span class="ml-2 text-[11px] bg-gradient-to-r from-purple-500 to-blue-500 text-white px-2.5 py-1 rounded-full font-bold">推荐 · 100+模型</span>
                         </label>
                         <input type="password" id="openrouterKey" class="w-full input-field rounded-lg px-4 py-3 text-sm" placeholder="sk-or-v1-..." />
                         <p class="text-xs text-slate-400 mt-2">一个API Key访问OpenAI、Claude、Gemini等100+模型</p>
@@ -635,7 +660,7 @@ app.get('/', (c) => {
                     <div class="p-5 rounded-xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 border border-emerald-500/30">
                         <label class="block text-sm font-semibold mb-2 text-white">
                             <i class="fas fa-search text-emerald-400 mr-2"></i>Web Search API Key (Serper.dev)
-                            <span class="ml-2 text-[10px] bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-2.5 py-1 rounded-full font-bold">联网搜索</span>
+                            <span class="ml-2 text-[11px] bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-2.5 py-1 rounded-full font-bold">联网搜索</span>
                         </label>
                         <input type="password" id="searchKey" class="w-full input-field rounded-lg px-4 py-3 text-sm" placeholder="Search API Key..." />
                         <p class="text-xs text-slate-400 mt-2">注册 Serper.dev 获取免费 Key，支持 @search 联网搜索</p>
