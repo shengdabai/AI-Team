@@ -105,6 +105,37 @@ test('valid identity forwards only to the fixed provider endpoint', async () => 
   assert.equal(response.status, 200);
   assert.equal((await response.json()).choices[0].message.content, 'fixture response');
 });
+
+for (const [provider, model] of [['openai', 'o3-mini'], ['deepseek', 'deepseek-reasoner']]) {
+  test(`${model} respects the caller's output token budget`, async () => {
+    mockUpstream((url, init) => {
+      const payload = JSON.parse(init.body);
+      assert.equal(payload.max_completion_tokens, 500);
+      assert.equal(payload.max_tokens, undefined);
+      return Response.json({ choices: [] });
+    });
+    assert.equal((await request(`/api/proxy/${provider}`, { body: JSON.stringify({
+      model, max_tokens: 500, messages: [{ role: 'user', content: 'short reply' }],
+    }) })).status, 200);
+  });
+}
+
+for (const [path, body, maxBytes] of [
+  ['/api/proxy/openai', { model: 'gpt-4o', messages: [{ role: 'user', content: 'test' }] }, 8 * 1024 * 1024],
+  ['/api/search', { query: 'test' }, 1024 * 1024],
+  ['/api/gpts/list', {}, 1024 * 1024],
+]) {
+  test(`${path} bounds JSON responses and cancels oversized upstream streams`, async () => {
+    let cancelled = false;
+    mockUpstream(() => new Response(new ReadableStream({ start(controller) {
+      // A small declared Content-Length must not bypass the streamed limit.
+      controller.enqueue(new Uint8Array(maxBytes + 1).fill(32));
+    }, pull(controller) { controller.enqueue(new TextEncoder().encode('{}')); controller.close(); },
+    cancel() { cancelled = true; } }), { headers: { 'Content-Length': '1' } }));
+    assert.equal((await request(path, { body: JSON.stringify(body) })).status, 502);
+    assert.equal(cancelled, true);
+  });
+}
 test('search rejects malformed and invalid payloads; upstream failures do not leak details', async () => {
   mockUpstream();
   for (const body of ['{', 'null', '{}', '{"query":42}', '{"query":" "}']) {

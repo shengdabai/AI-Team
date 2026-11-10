@@ -12,6 +12,7 @@ function appHarness(fetch, FileReader) {
   const context = vm.createContext({
     console: { error() {} },
     fetch,
+    URL,
     FileReader,
     toasts,
     setTimeout: callback => callback(),
@@ -32,7 +33,7 @@ function appHarness(fetch, FileReader) {
     showToast = message => toasts.push(message);
     globalThis.app = { state, AI_PROVIDERS, sendMessage, runMeetingMode, renderModels, showMentions,
       escapeHtml, renderMessage, renderChannels, renderGpts, renderImportedContent, showTypingIndicator,
-      handleFileSelect };
+      handleFileSelect, callCustomModel };
   })();`, context);
   return { ...context.app, input, document: context.document, toasts };
 }
@@ -101,6 +102,32 @@ test('supported images are read as data URLs for multimodal chat', () => {
 });
 
 const response = text => ({ json: async () => ({ choices: [{ message: { content: text } }] }) });
+
+for (const endpoint of ['http://example.com/chat', 'javascript:alert(1)', 'data:text/plain,test',
+  'https://user:password@example.com/chat', '/api/proxy/openai']) {
+  test(`custom endpoint ${endpoint} is rejected before sending a key or history`, async () => {
+    const app = appHarness(() => assert.fail('unsafe endpoint must not be fetched'));
+    await assert.rejects(app.callCustomModel({ endpoint, apiKey: 'test-only' }, '', {}, []), /HTTPS/);
+  });
+}
+
+for (const endpoint of ['https://example.com/chat', 'http://localhost:8080/v1/chat',
+  'http://127.0.0.1:8080/v1/chat', 'http://[::1]:8080/v1/chat']) {
+  test(`custom endpoint ${endpoint} preserves supported local and HTTPS requests`, async () => {
+    let called = false;
+    const app = appHarness(async (url, options) => {
+      called = true;
+      assert.equal(url, endpoint);
+      assert.equal(options.redirect, 'error');
+      assert.equal(options.credentials, 'omit');
+      assert.equal(options.referrerPolicy, 'no-referrer');
+      assert.equal(options.headers.Authorization, 'Bearer test-only');
+      return response('answer');
+    });
+    assert.equal(await app.callCustomModel({ endpoint, apiKey: 'test-only' }, '', {}, []), 'answer');
+    assert.equal(called, true);
+  });
+}
 
 for (const failure of [false, true]) {
   test(`in-flight ${failure ? 'error' : 'reply'} stays in the originating channel`, async () => {
