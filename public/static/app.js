@@ -929,9 +929,24 @@
     return data.choices?.[0]?.message?.content || '无响应内容';
   }
 
+  function validateCustomEndpoint(endpoint) {
+    try {
+      const url = new URL(endpoint);
+      const local = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+      if (!url.username && !url.password &&
+          (url.protocol === 'https:' || (url.protocol === 'http:' && local))) return;
+    } catch { /* Reject invalid and relative URLs before sending credentials. */ }
+    throw new Error('API 端点必须使用 HTTPS；仅本机回环地址允许 HTTP');
+  }
+
   async function callCustomModel(custom, userText, userMessage, channelMessages) {
+    // Validate here as well as in Settings: backups and caches are untrusted input.
+    validateCustomEndpoint(custom.endpoint);
     const response = await fetch(custom.endpoint, {
       method: 'POST',
+      redirect: 'error',
+      credentials: 'omit',
+      referrerPolicy: 'no-referrer',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${custom.apiKey}`
@@ -1541,6 +1556,13 @@
 
     if (!name || !endpoint) {
       showToast('请填写模型名称和API端点', 'error');
+      return;
+    }
+
+    try {
+      validateCustomEndpoint(endpoint);
+    } catch (error) {
+      showToast(error.message, 'error');
       return;
     }
 

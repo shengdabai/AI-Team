@@ -200,7 +200,7 @@ app.post('/api/proxy/:provider', async (c) => {
       const isReasoning = reasoningModels.some(rm => model.includes(rm))
 
       if (isReasoning) {
-        requestBody.max_completion_tokens = 4096
+        requestBody.max_completion_tokens = body.max_tokens || 4096
         delete requestBody.max_tokens
       } else {
         requestBody.max_tokens = body.max_tokens || 4096
@@ -219,7 +219,7 @@ app.post('/api/proxy/:provider', async (c) => {
     })
 
     if (!response.ok) return c.json({ error: 'Upstream provider rejected the request' }, 502)
-    const data: any = await response.json()
+    const data: any = JSON.parse(await readLimitedText(response, 8 * 1024 * 1024))
 
     // Normalize response to OpenAI format
     let normalizedResponse = data
@@ -280,7 +280,7 @@ app.post('/api/search', async (c) => {
     })
 
     if (!response.ok) return c.json({ error: 'Search provider rejected the request' }, 502)
-    const data = await response.json()
+    const data = JSON.parse(await readLimitedText(response))
     return c.json(data)
   } catch (error: any) {
     return c.json({ error: 'Search provider request failed' }, 502)
@@ -351,7 +351,7 @@ app.post('/api/gpts/list', async (c) => {
     })
 
     if (!response.ok) return c.json({ error: 'Assistants provider rejected the request' }, 502)
-    const data = await response.json()
+    const data = JSON.parse(await readLimitedText(response))
     return c.json(data)
   } catch (error: any) {
     return c.json({ error: 'Assistants provider request failed' }, 502)
@@ -826,7 +826,7 @@ app.get('/', (c) => {
     
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.17/dist/purify.min.js" integrity="sha384-P0JNneQf81HOl9VwNXK76cQ9VMD6Nfsnepxb0cCOg8+UzEdzgPHAPV4wVQrvYQSx" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="/static/app.js"></script>
 </body>
